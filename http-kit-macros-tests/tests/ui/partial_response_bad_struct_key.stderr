@@ -1,0 +1,5 @@
+error: unrecognised key in `#[partial_response(...)]`; expected `name` or `row`
+ --> tests/ui/partial_response_bad_struct_key.rs:4:20
+  |
+4 | #[partial_response(bogus = 1)]
+  |                    ^^^^^

@@ -1,0 +1,7 @@
+error: `#[projection_skip]` cannot be combined with `#[projection_field(...)]` or `#[column(...)]`
+ --> tests/ui/skip_with_column.rs:7:5
+  |
+7 | /     #[projection_skip]
+8 | |     #[column(Foo::Bar)]
+9 | |     pub secret: String,
+  | |______________________^

@@ -1,0 +1,5 @@
+error: `#[projection_field(column)]` is missing a value; write `#[projection_field(column = <Column::Variant>)]`
+ --> tests/ui/bare_column.rs:7:24
+  |
+7 |     #[projection_field(column)]
+  |                        ^^^^^^

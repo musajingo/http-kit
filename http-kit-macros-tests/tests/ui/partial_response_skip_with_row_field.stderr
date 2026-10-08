@@ -1,0 +1,6 @@
+error: `#[partial_response(skip)]` must be used on its own — not with `row_field` or `#[partial_include(...)]`
+ --> tests/ui/partial_response_skip_with_row_field.rs:5:5
+  |
+5 | /     #[partial_response(skip, row_field = other)]
+6 | |     pub id: i32,
+  | |_______________^

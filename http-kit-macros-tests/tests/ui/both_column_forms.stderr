@@ -1,0 +1,7 @@
+error: set the column with either `#[projection_field(column = ...)]` or `#[column(...)]`, not both
+ --> tests/ui/both_column_forms.rs:7:5
+  |
+7 | /     #[projection_field(column = Foo::A)]
+8 | |     #[column(Foo::B)]
+9 | |     pub name: String,
+  | |____________________^
