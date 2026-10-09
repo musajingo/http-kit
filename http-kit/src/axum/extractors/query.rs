@@ -10,6 +10,7 @@ use super::rejection::ExtractorRejection;
 pub struct ValidatedQuery<T>(pub T);
 
 impl<T> ValidatedQuery<T> {
+    /// Consumes the extractor and returns the inner value.
     pub fn into_inner(self) -> T {
         self.0
     }

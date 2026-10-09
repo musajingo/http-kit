@@ -13,15 +13,19 @@ use crate::response::{ApiResponse, HttpErrorResponse};
 /// An extraction or validation failure returned as an API error.
 #[derive(Debug, thiserror::Error)]
 pub enum ExtractorRejection {
+    /// The form could not be extracted, such as an invalid content type or body.
     #[error("Form data rejection: {0}")]
     FormRejection(#[from] FormRejection),
 
+    /// The JSON could not be extracted, such as an invalid content type or body.
     #[error("JSON data rejection: {0}")]
     JsonRejection(#[from] JsonRejection),
 
+    /// The URL query parameters could not be deserialized into the target type.
     #[error("Query string rejection: {0}")]
     QueryRejection(#[from] QueryRejection),
 
+    /// Deserialization succeeded, but the value failed its validation rules.
     #[error("Payload validation failed: {0}")]
     Validation(#[from] ValidationErrors),
 }

@@ -9,6 +9,7 @@ use super::rejection::ExtractorRejection;
 pub struct ValidatedJson<T>(pub T);
 
 impl<T> ValidatedJson<T> {
+    /// Consumes the extractor and returns the inner value.
     pub fn into_inner(self) -> T {
         self.0
     }

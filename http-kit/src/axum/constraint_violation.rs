@@ -6,8 +6,10 @@ use super::constraint_violation_kind::ConstraintViolationKind;
 pub struct ConstraintViolation {
     /// Field path, such as `address.postal_code`.
     pub field: String,
+    /// Human-readable explanation suitable for display to the user.
     pub message: String,
+    /// The category of constraint that failed.
     pub kind: ConstraintViolationKind,
-    /// Optional error details.
+    /// Optional structured context, such as a limit or an invalid reference ID.
     pub params: Option<serde_json::Value>,
 }
