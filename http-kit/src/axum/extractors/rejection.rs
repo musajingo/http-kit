@@ -75,7 +75,9 @@ impl IntoResponse for ExtractorRejection {
                 let _span = span!(Level::DEBUG, "form_rejection_error").entered();
                 debug!(message = "Form data rejection", error = %err);
 
-                if err.status() == StatusCode::PAYLOAD_TOO_LARGE {
+                if matches!(err, FormRejection::InvalidFormContentType(_)) {
+                    HttpErrorResponse::unsupported_media_type(err.body_text())
+                } else if err.status() == StatusCode::PAYLOAD_TOO_LARGE {
                     HttpErrorResponse::payload_too_large("The request body is too large.")
                 } else {
                     HttpErrorResponse::bad_request(err.body_text())
