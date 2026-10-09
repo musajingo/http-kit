@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+# Only the current checkout is validated, so block pushing anything else.
+# Deletions (zero SHA) are skipped; a delete-only push needs no checks.
+zero=0000000000000000000000000000000000000000
+needs_check=false
+while read -r _ local_sha _ _; do
+  [[ "$local_sha" == "$zero" ]] && continue
+  if [[ "$(git rev-parse "${local_sha}^{commit}")" != "$(git rev-parse HEAD)" ]]; then
+    echo "Push blocked: pushed commit differs from the current checkout (HEAD)." >&2
+    exit 1
+  fi
+  needs_check=true
+done
+"$needs_check" || exit 0
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Push blocked: uncommitted changes. Commit or stash them (git stash -u) before pushing." >&2
+  exit 1
+fi
+
+exec ./scripts/check.sh --check </dev/null
