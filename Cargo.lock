@@ -771,9 +771,11 @@ dependencies = [
  "pgkit",
  "serde",
  "serde_json",
+ "serde_path_to_error",
  "strum 0.28.0",
  "thiserror",
  "tokio",
+ "tracing",
  "utoipa",
  "validator",
 ]

@@ -1,4 +1,4 @@
-//! Expansion logic for the `#[pagination]` attribute macro (offset-based).
+//! Expansion logic for the `#[offset_pagination]` attribute macro (offset-based).
 //!
 //! Injects `page` and `page_size` fields onto the target struct.
 //!
@@ -15,12 +15,12 @@
 //! All arguments are optional and can be combined freely:
 //!
 //! ```text
-//! #[pagination]
-//! #[pagination(default_page_size = 25)]
-//! #[pagination(max_page_size = 50)]
-//! #[pagination(default_page_size = 25, max_page_size = 50)]
-//! #[pagination(skip(utoipa), default_page_size = 10)]
-//! #[pagination(skip(serde, validate), max_page_size = 200)]
+//! #[offset_pagination]
+//! #[offset_pagination(default_page_size = 25)]
+//! #[offset_pagination(max_page_size = 50)]
+//! #[offset_pagination(default_page_size = 25, max_page_size = 50)]
+//! #[offset_pagination(skip(utoipa), default_page_size = 10)]
+//! #[offset_pagination(skip(serde, validate), max_page_size = 200)]
 //! ```
 
 use proc_macro::TokenStream;
@@ -166,7 +166,7 @@ pub(crate) fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
         }));
     } else {
         return TokenStream::from(quote! {
-            compile_error!("pagination macro only supports structs with named fields.");
+            compile_error!("offset_pagination macro only supports structs with named fields.");
         });
     }
 

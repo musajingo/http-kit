@@ -2,60 +2,30 @@ use axum::extract::{FromRequest, Request, rejection::JsonRejection};
 use serde::de::DeserializeOwned;
 use validator::Validate;
 
-use super::error::Error;
+use super::rejection::ExtractorRejection;
 
-/// Wrapper for validated JSON payloads.
-///
-/// This struct is used to extract and validate JSON data from incoming requests.
-/// It ensures that the payload conforms to the validation rules defined in the
-/// corresponding struct.
-///
-/// # Type Parameters
-/// - `T`: The type of the JSON payload, which must implement `DeserializeOwned`
-///   and `Validate`.
-///
-/// # Example
-/// ```rust,ignore
-/// use serde::Deserialize;
-/// use validator::Validate;
-/// use validation::ValidatedJsonPayload;
-///
-/// #[derive(Deserialize, Validate)]
-/// struct MyJson {
-///     #[validate(email)]
-///     email: String,
-/// }
-///
-/// async fn handler(
-///     ValidatedJsonPayload(payload): ValidatedJsonPayload<MyJson>,
-/// ) {
-///     // `payload` is guaranteed to be valid here
-/// }
-/// ```
+/// Deserializes and validates a JSON body before the handler runs.
 #[derive(Debug, Clone, Copy, Default)]
-pub struct ValidatedJsonPayload<T>(pub T);
+pub struct ValidatedJson<T>(pub T);
 
-impl<T> ValidatedJsonPayload<T> {
-    /// Extracts the inner value.
-    ///
-    /// This method can be used to retrieve the validated payload after extraction.
+impl<T> ValidatedJson<T> {
     pub fn into_inner(self) -> T {
         self.0
     }
 }
 
-impl<T, S> FromRequest<S> for ValidatedJsonPayload<T>
+impl<T, S> FromRequest<S> for ValidatedJson<T>
 where
     T: DeserializeOwned + Validate,
     S: Send + Sync,
     axum::Json<T>: FromRequest<S, Rejection = JsonRejection>,
 {
-    type Rejection = Error;
+    type Rejection = ExtractorRejection;
 
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let axum::Json(value) = axum::Json::<T>::from_request(req, state).await?;
         value.validate()?;
-        Ok(ValidatedJsonPayload(value))
+        Ok(ValidatedJson(value))
     }
 }
 
@@ -83,15 +53,15 @@ mod tests {
         kind: Kind,
     }
 
-    async fn extract(body: &str) -> Result<ValidatedJsonPayload<Payload>, Error> {
+    async fn extract(body: &str) -> Result<ValidatedJson<Payload>, ExtractorRejection> {
         let req = Request::builder()
             .header("content-type", "application/json")
             .body(Body::from(body.to_string()))
             .unwrap();
-        ValidatedJsonPayload::from_request(req, &()).await
+        ValidatedJson::from_request(req, &()).await
     }
 
-    async fn response_json(err: Error) -> (StatusCode, Value) {
+    async fn response_json(err: ExtractorRejection) -> (StatusCode, Value) {
         let response = err.into_response();
         let status = response.status();
         let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();

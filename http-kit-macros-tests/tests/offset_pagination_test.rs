@@ -6,7 +6,7 @@ const MAX_PAGE_SIZE_LITERAL: u32 = 100;
 
 // ── Default (all attrs emitted) ────────────────────────────────────────────
 
-#[http_kit_macros::pagination]
+#[http_kit_macros::offset_pagination]
 #[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct TestPaginationStruct {
     #[allow(dead_code)]
@@ -91,7 +91,7 @@ fn test_validator_rejects_out_of_range() {
 //
 // No #[validate(range(...))] emitted — any page/page_size value passes Validate.
 
-#[http_kit_macros::pagination(skip(validate))]
+#[http_kit_macros::offset_pagination(skip(validate))]
 #[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct SkipValidatePaginationStruct {
     #[allow(dead_code)]
@@ -135,7 +135,7 @@ fn test_skip_validate_out_of_range_passes_validation() {
 //
 // No #[param(...)] attrs emitted. Struct still fully functional.
 
-#[http_kit_macros::pagination(skip(utoipa))]
+#[http_kit_macros::offset_pagination(skip(utoipa))]
 #[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct SkipUtoipaPaginationStruct {
     #[allow(dead_code)]
@@ -167,7 +167,7 @@ fn test_skip_utoipa_serde_and_validate_still_work() {
 // No #[serde(...)] attrs and no helper fns emitted.
 // Validate and utoipa attrs are still present.
 
-#[http_kit_macros::pagination(skip(serde))]
+#[http_kit_macros::offset_pagination(skip(serde))]
 #[derive(Debug, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct SkipSerdePaginationStruct {
     #[allow(dead_code)]
@@ -200,7 +200,7 @@ fn test_skip_serde_fields_exist_and_validate_works() {
 
 // ── skip(validate, utoipa) — serde only ───────────────────────────────────
 
-#[http_kit_macros::pagination(skip(validate, utoipa))]
+#[http_kit_macros::offset_pagination(skip(validate, utoipa))]
 #[derive(Debug, Deserialize, PartialEq)]
 struct SerdeOnlyPaginationStruct {
     #[allow(dead_code)]
@@ -217,7 +217,7 @@ fn test_serde_only_pagination_defaults_and_fields() {
 
 // ── skip(serde, validate, utoipa) — bare fields only ──────────────────────
 
-#[http_kit_macros::pagination(skip(serde, validate, utoipa))]
+#[http_kit_macros::offset_pagination(skip(serde, validate, utoipa))]
 #[derive(Debug, PartialEq)]
 struct BarePaginationStruct {
     #[allow(dead_code)]
@@ -239,7 +239,7 @@ fn test_bare_pagination_fields_exist() {
 //
 // Custom default page size; max stays at 100.
 
-#[http_kit_macros::pagination(default_page_size = 25)]
+#[http_kit_macros::offset_pagination(default_page_size = 25)]
 #[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct CustomDefaultPageSizeStruct {
     #[allow(dead_code)]
@@ -269,7 +269,7 @@ fn test_custom_default_page_size_helper_returns_custom_value() {
 //
 // Custom max page size; validate should reject values above it.
 
-#[http_kit_macros::pagination(max_page_size = 50)]
+#[http_kit_macros::offset_pagination(max_page_size = 50)]
 #[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct CustomMaxPageSizeStruct {
     #[allow(dead_code)]
@@ -314,7 +314,7 @@ fn test_custom_max_page_size_validate_rejects_above_it() {
 
 // ── default_page_size = N, max_page_size = N ───────────────────────────────
 
-#[http_kit_macros::pagination(default_page_size = 10, max_page_size = 200)]
+#[http_kit_macros::offset_pagination(default_page_size = 10, max_page_size = 200)]
 #[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct CustomBothPageSizeStruct {
     #[allow(dead_code)]
@@ -353,7 +353,7 @@ fn test_custom_both_page_size_and_max() {
 
 // ── skip + custom values ───────────────────────────────────────────────────
 
-#[http_kit_macros::pagination(skip(utoipa), default_page_size = 15, max_page_size = 75)]
+#[http_kit_macros::offset_pagination(skip(utoipa), default_page_size = 15, max_page_size = 75)]
 #[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
 struct SkipUtoipaCustomPageSizeStruct {
     #[allow(dead_code)]

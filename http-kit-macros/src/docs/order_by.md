@@ -7,9 +7,9 @@ and the service layer picks a fallback (typically the table PK).
 
 ## Generated fields
 
-| Field | Type | Default |
-|---|---|---|
-| `order_by` | `Option<FieldsEnum>` | `None` |
+| Field       | Type                                     | Default                       |
+| ----------- | ---------------------------------------- | ----------------------------- |
+| `order_by`  | `Option<FieldsEnum>`                     | `None`                        |
 | `order_dir` | `::http_kit::ordering::OrderByDirection` | `OrderByDirection::default()` |
 
 ## Generated attributes (suppressible via `skip(...)`)

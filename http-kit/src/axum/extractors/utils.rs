@@ -2,15 +2,7 @@ use axum::extract::rejection::JsonRejection;
 use serde_json::json;
 use validator::{ValidationErrors, ValidationErrorsKind};
 
-/// Field-level error details for a JSON body that parsed but didn't match the
-/// target type (e.g. an unsupported enum value), in the same shape as
-/// [`validation_errors_to_json`].
-///
-/// axum wraps `Json` deserialization in `serde_path_to_error`, so a data error
-/// carries the failing field's path (`files[0].mimeType`); digging it out of the
-/// rejection's source chain lets the error surface as a standard validation
-/// response instead of an opaque 400. Returns `None` when the rejection isn't a
-/// data error or the failure isn't attributable to a field (empty path).
+/// Extracts field-level details from a JSON deserialization error.
 pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::Value> {
     let JsonRejection::JsonDataError(rejection) = rejection else {
         return None;
@@ -43,16 +35,7 @@ pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::
     None
 }
 
-/// Convert `ValidationErrors` into a JSON representation.
-///
-/// This function recursively processes validation errors and converts them
-/// into a structured JSON format that can be returned in API responses.
-///
-/// # Parameters
-/// - `validation_errors`: A reference to the `ValidationErrors` object.
-///
-/// # Returns
-/// - A `serde_json::Value` representing the validation errors in JSON format.
+/// Converts nested validation errors into API error details.
 pub fn validation_errors_to_json(validation_errors: &ValidationErrors) -> serde_json::Value {
     let mut errors = serde_json::Map::new();
 
@@ -92,8 +75,7 @@ pub fn validation_errors_to_json(validation_errors: &ValidationErrors) -> serde_
     serde_json::Value::Object(errors)
 }
 
-/// `field:code` pairs for logging — the codes say what failed without the
-/// submitted values, which may be credentials.
+/// Returns field paths and error codes for logging without submitted values.
 pub fn rejected_fields(validation_errors: &ValidationErrors) -> Vec<String> {
     let mut out = Vec::new();
     collect_rejected(validation_errors, "", &mut out);
@@ -124,9 +106,6 @@ fn collect_rejected(validation_errors: &ValidationErrors, prefix: &str, out: &mu
     }
 }
 
-/// Convert a snake_case field identifier to camelCase, matching serde's
-/// `rename_all = "camelCase"`. Single-word and already-camelCase idents are
-/// returned unchanged.
 fn to_camel_case(field: &str) -> String {
     // Schema-level errors use the sentinel `__all__`; leave it intact rather
     // than mangling it to "All".

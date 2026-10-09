@@ -1,144 +1,77 @@
-//! Error handling module for the validation system.
-//!
-//! This module defines a custom `Error` enum to represent various types of errors
-//! that can occur during request validation and processing. It also provides
-//! implementations for converting these errors into HTTP responses, ensuring
-//! consistent error handling across the application.
-
 use axum::{
     extract::rejection::{FormRejection, JsonRejection, QueryRejection},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use http_kit::response::{ApiResponse, HttpErrorResponse};
 use tracing::{Level, debug, span};
 use validator::ValidationErrors;
 
 use super::utils;
 
-/// Custom error type for the validation module.
-///
-/// This enum represents different types of errors that can occur during
-/// request validation and processing.
-///
-/// # Variants
-/// - `FormRejection`: Represents errors that occur when form data cannot be parsed.
-/// - `JsonRejection`: Represents errors that occur when JSON data cannot be parsed.
-/// - `QueryRejection`: Represents errors that occur when query string data cannot be parsed.
-/// - `Validation`: Represents validation errors for request payloads.
+use crate::response::{ApiResponse, HttpErrorResponse};
+
+/// An extraction or validation failure returned as an API error.
 #[derive(Debug)]
-pub enum Error {
-    /// Error when form data cannot be parsed.
+pub enum ExtractorRejection {
     FormRejection(FormRejection),
 
-    /// Error when JSON data cannot be parsed.
     JsonRejection(JsonRejection),
 
-    /// Error when query string data cannot be parsed.
     QueryRejection(QueryRejection),
 
-    /// Error when request payload validation fails.
     Validation(ValidationErrors),
 }
 
-impl std::error::Error for Error {
-    /// Returns the source of the error, if available.
-    ///
-    /// # Returns
-    /// - `Some(&dyn std::error::Error)` if the error has a source.
-    /// - `None` if the error has no source.
+impl std::error::Error for ExtractorRejection {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Error::FormRejection(e) => Some(e),
-            Error::JsonRejection(e) => Some(e),
-            Error::QueryRejection(e) => Some(e),
-            Error::Validation(e) => Some(e),
+            ExtractorRejection::FormRejection(e) => Some(e),
+            ExtractorRejection::JsonRejection(e) => Some(e),
+            ExtractorRejection::QueryRejection(e) => Some(e),
+            ExtractorRejection::Validation(e) => Some(e),
         }
     }
 }
 
-impl std::fmt::Display for Error {
-    /// Formats the error as a human-readable string.
-    ///
-    /// # Parameters
-    /// - `f`: The formatter.
-    ///
-    /// # Returns
-    /// - A `Result` indicating whether the formatting was successful.
+impl std::fmt::Display for ExtractorRejection {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::FormRejection(err) => write!(f, "Form data rejection: {}", err),
-            Error::JsonRejection(err) => write!(f, "JSON data rejection: {}", err),
-            Error::QueryRejection(err) => write!(f, "Query string rejection: {}", err),
-            Error::Validation(err) => write!(f, "Payload validation failed: {}", err),
+            ExtractorRejection::FormRejection(err) => write!(f, "Form data rejection: {}", err),
+            ExtractorRejection::JsonRejection(err) => write!(f, "JSON data rejection: {}", err),
+            ExtractorRejection::QueryRejection(err) => write!(f, "Query string rejection: {}", err),
+            ExtractorRejection::Validation(err) => write!(f, "Payload validation failed: {}", err),
         }
     }
 }
 
-impl From<ValidationErrors> for Error {
-    /// Converts `ValidationErrors` into the `Error` enum.
-    ///
-    /// # Parameters
-    /// - `e`: The `ValidationErrors` to convert.
-    ///
-    /// # Returns
-    /// - An `Error::Validation` variant containing the validation errors.
+impl From<ValidationErrors> for ExtractorRejection {
     fn from(e: ValidationErrors) -> Self {
-        Error::Validation(e)
+        ExtractorRejection::Validation(e)
     }
 }
 
-impl From<FormRejection> for Error {
-    /// Converts `FormRejection` into the `Error` enum.
-    ///
-    /// # Parameters
-    /// - `e`: The `FormRejection` to convert.
-    ///
-    /// # Returns
-    /// - An `Error::FormRejection` variant containing the form rejection error.
+impl From<FormRejection> for ExtractorRejection {
     fn from(e: FormRejection) -> Self {
-        Error::FormRejection(e)
+        ExtractorRejection::FormRejection(e)
     }
 }
 
-impl From<JsonRejection> for Error {
-    /// Converts `JsonRejection` into the `Error` enum.
-    ///
-    /// # Parameters
-    /// - `e`: The `JsonRejection` to convert.
-    ///
-    /// # Returns
-    /// - An `Error::JsonRejection` variant containing the JSON rejection error.
+impl From<JsonRejection> for ExtractorRejection {
     fn from(e: JsonRejection) -> Self {
-        Error::JsonRejection(e)
+        ExtractorRejection::JsonRejection(e)
     }
 }
 
-impl From<QueryRejection> for Error {
-    /// Converts `QueryRejection` into the `Error` enum.
-    ///
-    /// # Parameters
-    /// - `e`: The `QueryRejection` to convert.
-    ///
-    /// # Returns
-    /// - An `Error::QueryRejection` variant containing the query rejection error.
+impl From<QueryRejection> for ExtractorRejection {
     fn from(e: QueryRejection) -> Self {
-        Error::QueryRejection(e)
+        ExtractorRejection::QueryRejection(e)
     }
 }
 
-impl IntoResponse for Error {
-    /// Converts the error into an HTTP response.
-    ///
-    /// This implementation ensures that each error type is converted into a
-    /// consistent HTTP response with the appropriate status code, message,
-    /// and error details.
-    ///
-    /// # Returns
-    /// - A `Response` object representing the HTTP response.
+impl IntoResponse for ExtractorRejection {
     fn into_response(self) -> Response {
         let error_details = match self {
-            Error::FormRejection(err) => {
+            ExtractorRejection::FormRejection(err) => {
                 let _span = span!(Level::DEBUG, "form_rejection_error").entered();
                 debug!(message = "Form data rejection", error = %err);
 
@@ -148,7 +81,7 @@ impl IntoResponse for Error {
                     HttpErrorResponse::bad_request(err.body_text())
                 }
             }
-            Error::JsonRejection(err) => {
+            ExtractorRejection::JsonRejection(err) => {
                 let _span = span!(Level::DEBUG, "json_rejection_error").entered();
                 debug!(message = "JSON data rejection", error = %err);
 
@@ -165,13 +98,13 @@ impl IntoResponse for Error {
                     HttpErrorResponse::bad_request(err.body_text())
                 }
             }
-            Error::QueryRejection(err) => {
+            ExtractorRejection::QueryRejection(err) => {
                 let _span = span!(Level::DEBUG, "query_rejection_error").entered();
                 debug!(message = "Query string rejection", error = %err);
 
                 HttpErrorResponse::bad_request(err.body_text())
             }
-            Error::Validation(validation_errors) => {
+            ExtractorRejection::Validation(validation_errors) => {
                 let _span = span!(Level::DEBUG, "payload_validation_error").entered();
                 debug!(
                     message = "Validation failed",
@@ -221,7 +154,7 @@ mod tests {
         };
 
         let validation_errors = invalid_payload.validate().unwrap_err();
-        let error = Error::from(validation_errors);
+        let error = ExtractorRejection::from(validation_errors);
 
         let response = error.into_response();
         assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
@@ -246,7 +179,7 @@ mod tests {
         };
 
         let validation_errors = invalid_payload.validate().unwrap_err();
-        let error = Error::from(validation_errors);
+        let error = ExtractorRejection::from(validation_errors);
 
         let response = error.into_response();
         assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
@@ -281,7 +214,7 @@ mod tests {
             vec!["password:length"]
         );
 
-        let response = Error::from(validation_errors).into_response();
+        let response = ExtractorRejection::from(validation_errors).into_response();
         assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
         let body = deserialize_response_to_value(response).await;
@@ -295,7 +228,7 @@ mod tests {
     #[tokio::test]
     async fn test_empty_validation_errors_into_response() {
         let validation_errors = ValidationErrors::new();
-        let error = Error::from(validation_errors);
+        let error = ExtractorRejection::from(validation_errors);
 
         let response = error.into_response();
         assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);

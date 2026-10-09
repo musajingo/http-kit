@@ -47,7 +47,7 @@
 //! pub struct MinimalCursorQuery { /* your fields */ }
 //!
 //! // Offset pagination — skip utoipa only
-//! #[http_kit_macros::pagination(skip(utoipa))]
+//! #[http_kit_macros::offset_pagination(skip(utoipa))]
 //! #[derive(Debug, serde::Deserialize, validator::Validate)]
 //! pub struct ListQuery { /* your fields */ }
 //!
@@ -79,9 +79,9 @@ mod partial_response;
 mod projection;
 mod projection_field;
 
-#[doc = include_str!("docs/pagination.md")]
+#[doc = include_str!("docs/offset_pagination.md")]
 #[proc_macro_attribute]
-pub fn pagination(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn offset_pagination(attr: TokenStream, item: TokenStream) -> TokenStream {
     pagination::offset::expand(attr, item)
 }
 

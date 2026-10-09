@@ -17,6 +17,7 @@ cursor-pagination = []
 patch-request     = ["dep:delta"]
 projection        = ["dep:thiserror", "dep:validator", "dep:http-kit-macros"]
 response          = ["offset-pagination", "cursor-pagination", "dep:axum", "dep:serde_json", "dep:bon", "dep:thiserror", "dep:strum", "dep:chrono"]
+axum              = ["response", "dep:validator", "dep:tracing", "dep:serde_path_to_error"]
 macros     = ["ordering", "dep:http-kit-macros"]
 utoipa     = ["dep:utoipa", "delta?/utoipa"]
 with-pgkit = ["ordering", "dep:pgkit"]
@@ -30,6 +31,8 @@ serde_json = { workspace = true, optional = true }
 strum      = { workspace = true, optional = true }
 thiserror  = { version = "2.0", optional = true }
 utoipa     = { workspace = true, optional = true }
+tracing    = { version = "0.1", optional = true }
+serde_path_to_error = { version = "0.1", optional = true }
 
 delta     = { git = "https://github.com/musajingo/delta", tag = "v0.1.0", optional = true }
 pgkit     = { git = "https://github.com/musajingo/pgkit", tag = "v0.4.0", optional = true, default-features = false }

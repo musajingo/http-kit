@@ -20,18 +20,18 @@ Injects offset-pagination fields (`page`, `page_size`) into a struct.
 ## Syntax
 
 ```text
-#[pagination]
-#[pagination(default_page_size = 25)]
-#[pagination(max_page_size = 50)]
-#[pagination(default_page_size = 25, max_page_size = 50)]
-#[pagination(skip(utoipa), default_page_size = 10)]
-#[pagination(skip(serde, validate, utoipa))]
+#[offset_pagination]
+#[offset_pagination(default_page_size = 25)]
+#[offset_pagination(max_page_size = 50)]
+#[offset_pagination(default_page_size = 25, max_page_size = 50)]
+#[offset_pagination(skip(utoipa), default_page_size = 10)]
+#[offset_pagination(skip(serde, validate, utoipa))]
 ```
 
 ## Example
 
 ```ignore
-#[http_kit_macros::pagination(default_page_size = 25, max_page_size = 200)]
+#[http_kit_macros::offset_pagination(default_page_size = 25, max_page_size = 200)]
 #[derive(Debug, serde::Deserialize, validator::Validate, utoipa::IntoParams)]
 pub struct ListUsersQuery {
     pub search: Option<String>,
