@@ -44,17 +44,9 @@ pub enum ProjectionError {
 // ––– ProjectionErrors –––
 
 /// A collection of [`ProjectionError`]s.
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, thiserror::Error)]
+#[error("{}", .0.iter().map(ToString::to_string).collect::<Vec<_>>().join("; "))]
 pub struct ProjectionErrors(pub Vec<ProjectionError>);
-
-impl std::fmt::Display for ProjectionErrors {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let messages: Vec<String> = self.0.iter().map(|err| err.to_string()).collect();
-        write!(f, "{}", messages.join("; "))
-    }
-}
-
-impl std::error::Error for ProjectionErrors {}
 
 #[cfg(test)]
 mod tests {

@@ -11,61 +11,19 @@ use super::utils;
 use crate::response::{ApiResponse, HttpErrorResponse};
 
 /// An extraction or validation failure returned as an API error.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ExtractorRejection {
-    FormRejection(FormRejection),
+    #[error("Form data rejection: {0}")]
+    FormRejection(#[from] FormRejection),
 
-    JsonRejection(JsonRejection),
+    #[error("JSON data rejection: {0}")]
+    JsonRejection(#[from] JsonRejection),
 
-    QueryRejection(QueryRejection),
+    #[error("Query string rejection: {0}")]
+    QueryRejection(#[from] QueryRejection),
 
-    Validation(ValidationErrors),
-}
-
-impl std::error::Error for ExtractorRejection {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            ExtractorRejection::FormRejection(e) => Some(e),
-            ExtractorRejection::JsonRejection(e) => Some(e),
-            ExtractorRejection::QueryRejection(e) => Some(e),
-            ExtractorRejection::Validation(e) => Some(e),
-        }
-    }
-}
-
-impl std::fmt::Display for ExtractorRejection {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ExtractorRejection::FormRejection(err) => write!(f, "Form data rejection: {}", err),
-            ExtractorRejection::JsonRejection(err) => write!(f, "JSON data rejection: {}", err),
-            ExtractorRejection::QueryRejection(err) => write!(f, "Query string rejection: {}", err),
-            ExtractorRejection::Validation(err) => write!(f, "Payload validation failed: {}", err),
-        }
-    }
-}
-
-impl From<ValidationErrors> for ExtractorRejection {
-    fn from(e: ValidationErrors) -> Self {
-        ExtractorRejection::Validation(e)
-    }
-}
-
-impl From<FormRejection> for ExtractorRejection {
-    fn from(e: FormRejection) -> Self {
-        ExtractorRejection::FormRejection(e)
-    }
-}
-
-impl From<JsonRejection> for ExtractorRejection {
-    fn from(e: JsonRejection) -> Self {
-        ExtractorRejection::JsonRejection(e)
-    }
-}
-
-impl From<QueryRejection> for ExtractorRejection {
-    fn from(e: QueryRejection) -> Self {
-        ExtractorRejection::QueryRejection(e)
-    }
+    #[error("Payload validation failed: {0}")]
+    Validation(#[from] ValidationErrors),
 }
 
 impl IntoResponse for ExtractorRejection {
