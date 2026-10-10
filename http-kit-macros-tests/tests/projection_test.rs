@@ -3,7 +3,7 @@
 use http_kit::projection::ProjectionField;
 use http_kit_macros::projection;
 use serde::Deserialize;
-use validator::Validate;
+use valid8r::Validate;
 
 // ── Test fixtures ─────────────────────────────────────────────────────────────
 

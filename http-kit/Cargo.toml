@@ -14,12 +14,12 @@ default = ["ordering", "offset-pagination", "cursor-pagination", "response", "ut
 ordering          = []
 offset-pagination = []
 cursor-pagination = []
-patch-request     = ["dep:delta"]
-projection        = ["dep:thiserror", "dep:validator", "dep:http-kit-macros"]
+patch-request     = ["dep:field-delta"]
+projection        = ["dep:thiserror", "dep:valid8r", "dep:http-kit-macros"]
 response          = ["offset-pagination", "cursor-pagination", "dep:axum", "dep:serde_json", "dep:bon", "dep:strum", "dep:chrono"]
-axum              = ["response", "dep:thiserror", "dep:validator", "dep:tracing", "dep:serde_path_to_error"]
+axum              = ["response", "dep:thiserror", "dep:valid8r", "dep:tracing", "dep:serde_path_to_error"]
 macros     = ["ordering", "dep:http-kit-macros"]
-utoipa     = ["dep:utoipa", "delta?/utoipa"]
+utoipa     = ["dep:utoipa", "field-delta?/utoipa"]
 with-pgkit = ["ordering", "dep:pgkit"]
 
 [dependencies]
@@ -34,9 +34,9 @@ utoipa     = { workspace = true, optional = true }
 tracing    = { version = "0.1", optional = true }
 serde_path_to_error = { version = "0.1", optional = true }
 
-delta     = { git = "https://github.com/musajingo/delta", tag = "v0.1.0", optional = true }
-pgkit     = { git = "https://github.com/musajingo/pgkit", tag = "v0.4.0", optional = true, default-features = false }
-validator = { git = "https://github.com/musajingo/validator", tag = "v0.1.0", optional = true }
+field-delta = { version = "0.1.0", optional = true }
+pgkit       = { version = "0.4.0", optional = true, default-features = false }
+valid8r     = { version = "0.2.2", optional = true }
 
 # ––– Workspace members –––
 http-kit-macros = { path = "../http-kit-macros", optional = true }

@@ -33,7 +33,7 @@ Injects cursor-pagination fields (`cursor`, `limit`) into a struct.
 
 ```ignore
 #[http_kit_macros::cursor_pagination(default_limit = 10, max_limit = 50)]
-#[derive(Debug, serde::Deserialize, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, serde::Deserialize, valid8r::Validate, utoipa::IntoParams)]
 pub struct ListItemsQuery {
     pub search: Option<String>,
 }

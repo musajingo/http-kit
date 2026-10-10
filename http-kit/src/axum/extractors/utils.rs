@@ -1,6 +1,6 @@
 use axum::extract::rejection::JsonRejection;
 use serde_json::json;
-use validator::{ValidationErrors, ValidationErrorsKind};
+use valid8r::{ValidationErrors, ValidationErrorsKind};
 
 /// Extracts field-level details from a JSON deserialization error.
 pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::Value> {
@@ -40,7 +40,7 @@ pub fn validation_errors_to_json(validation_errors: &ValidationErrors) -> serde_
     let mut errors = serde_json::Map::new();
 
     for (field, field_errors) in validation_errors.errors() {
-        // `validator` keys errors by the raw Rust field ident; the API field names
+        // `valid8r` keys errors by the raw Rust field ident; the API field names
         // are camelCase (`#[serde(rename_all = "camelCase")]`), so map the key.
         let key = to_camel_case(field);
         match field_errors {
@@ -134,7 +134,7 @@ mod tests {
     use super::*;
     use serde::Deserialize;
     use serde_json::json;
-    use validator::Validate;
+    use valid8r::Validate;
 
     #[derive(Debug, Validate, Deserialize)]
     struct TestItem {

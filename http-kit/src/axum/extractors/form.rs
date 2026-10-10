@@ -1,6 +1,6 @@
 use axum::extract::{Form, FromRequest, Request, rejection::FormRejection};
 use serde::de::DeserializeOwned;
-use validator::Validate;
+use valid8r::Validate;
 
 use super::rejection::ExtractorRejection;
 

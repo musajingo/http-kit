@@ -8,7 +8,7 @@
 //!
 //! ```ignore
 //! use serde::Deserialize;
-//! use validator::Validate;
+//! use valid8r::Validate;
 //! use utoipa::IntoParams;
 //!
 //! #[http_kit_macros::cursor_pagination]
@@ -48,7 +48,7 @@
 //!
 //! // Offset pagination — skip utoipa only
 //! #[http_kit_macros::offset_pagination(skip(utoipa))]
-//! #[derive(Debug, serde::Deserialize, validator::Validate)]
+//! #[derive(Debug, serde::Deserialize, valid8r::Validate)]
 //! pub struct ListQuery { /* your fields */ }
 //!
 //! // Ordering — skip serde (manage deserialization yourself)

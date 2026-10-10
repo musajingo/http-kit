@@ -1,6 +1,6 @@
 use super::constraint_violation_kind::ConstraintViolationKind;
 
-/// A service-layer constraint violation, distinct from `validator::ValidationError`.
+/// A service-layer constraint violation, distinct from `valid8r::ValidationError`.
 #[derive(Debug, thiserror::Error)]
 #[error("\"{field}\" failed validation with message {message} (validation kind: {kind})")]
 pub struct ConstraintViolation {

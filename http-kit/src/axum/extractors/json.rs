@@ -1,6 +1,6 @@
 use axum::extract::{FromRequest, Request, rejection::JsonRejection};
 use serde::de::DeserializeOwned;
-use validator::Validate;
+use valid8r::Validate;
 
 use super::rejection::ExtractorRejection;
 
@@ -37,7 +37,7 @@ mod tests {
     use axum::response::IntoResponse;
     use serde::Deserialize;
     use serde_json::Value;
-    use validator::Validate;
+    use valid8r::Validate;
 
     use super::*;
 

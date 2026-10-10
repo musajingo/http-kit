@@ -55,7 +55,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationError, ValidationErrors};
+use valid8r::{Validate, ValidationError, ValidationErrors};
 
 #[cfg(feature = "with-pgkit")]
 use super::column_selections::IntoColumnSelections;

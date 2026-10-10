@@ -32,7 +32,7 @@ Injects offset-pagination fields (`page`, `page_size`) into a struct.
 
 ```ignore
 #[http_kit_macros::offset_pagination(default_page_size = 25, max_page_size = 200)]
-#[derive(Debug, serde::Deserialize, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, serde::Deserialize, valid8r::Validate, utoipa::IntoParams)]
 pub struct ListUsersQuery {
     pub search: Option<String>,
 }

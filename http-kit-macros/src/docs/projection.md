@@ -11,7 +11,7 @@ Injects a `fields: Option<Projection<ResponseField>>` field onto a struct.
 
 ```ignore
 #[http_kit_macros::projection(ArticleField)]
-#[derive(Debug, serde::Deserialize, validator::Validate)]
+#[derive(Debug, serde::Deserialize, valid8r::Validate)]
 pub struct ListArticlesQuery {
     pub search: Option<String>,
     // Injected: fields: Option<Projection<ArticleField>>

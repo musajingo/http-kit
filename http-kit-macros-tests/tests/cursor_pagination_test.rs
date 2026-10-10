@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use validator::Validate;
+use valid8r::Validate;
 
 const DEFAULT_LIMIT_LITERAL: u32 = 20;
 const MAX_LIMIT_LITERAL: u32 = 100;
@@ -7,7 +7,7 @@ const MAX_LIMIT_LITERAL: u32 = 100;
 // ── Default (all attrs emitted) ────────────────────────────────────────────
 
 #[http_kit_macros::cursor_pagination]
-#[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct TestCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,
@@ -101,7 +101,7 @@ fn test_validator_rejects_out_of_range_limit() {
 // No #[validate(range(...))] is emitted — any limit value passes Validate.
 
 #[http_kit_macros::cursor_pagination(skip(validate))]
-#[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct SkipValidateCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,
@@ -145,7 +145,7 @@ fn test_skip_validate_out_of_range_limit_passes_validation() {
 // the OpenAPI schema simply lacks the min/max hints.
 
 #[http_kit_macros::cursor_pagination(skip(utoipa))]
-#[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct SkipUtopiaeCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,
@@ -178,7 +178,7 @@ fn test_skip_utoipa_validate_still_enforced() {
 // Without a serde default, fields must be provided explicitly when deserializing.
 
 #[http_kit_macros::cursor_pagination(skip(serde))]
-#[derive(Debug, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct SkipSerdeCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,
@@ -247,7 +247,7 @@ fn test_bare_cursor_fields_exist() {
 // Custom default limit; max stays at 100.
 
 #[http_kit_macros::cursor_pagination(default_limit = 10)]
-#[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct CustomDefaultCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,
@@ -271,7 +271,7 @@ fn test_custom_default_helper_function_returns_custom_value() {
 // Custom max limit; validate should reject values above it.
 
 #[http_kit_macros::cursor_pagination(max_limit = 50)]
-#[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct CustomMaxCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,
@@ -315,7 +315,7 @@ fn test_custom_max_validate_rejects_above_custom_max() {
 // ── default = N, max = N ───────────────────────────────────────────────────
 
 #[http_kit_macros::cursor_pagination(default_limit = 5, max_limit = 25)]
-#[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct CustomBothCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,
@@ -351,7 +351,7 @@ fn test_custom_both_default_and_max() {
 // ── skip + custom values ───────────────────────────────────────────────────
 
 #[http_kit_macros::cursor_pagination(skip(utoipa), default_limit = 15, max_limit = 60)]
-#[derive(Debug, Deserialize, PartialEq, validator::Validate, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, PartialEq, valid8r::Validate, utoipa::IntoParams)]
 struct SkipUtoipaCustomCursorStruct {
     #[allow(dead_code)]
     existing_field: Option<String>,

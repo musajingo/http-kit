@@ -4,7 +4,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use tracing::{Level, debug, span};
-use validator::ValidationErrors;
+use valid8r::ValidationErrors;
 
 use super::utils;
 
@@ -92,7 +92,7 @@ mod tests {
     use axum::body;
     use serde::Deserialize;
     use serde_json::{Value, json};
-    use validator::Validate;
+    use valid8r::Validate;
 
     // Helper to deserialize response body to serde_json::Value
     async fn deserialize_response_to_value(response: Response) -> Value {

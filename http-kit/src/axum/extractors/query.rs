@@ -1,7 +1,7 @@
 use axum::extract::{FromRequestParts, Query};
 use axum::http::request::Parts;
 use serde::de::DeserializeOwned;
-use validator::Validate;
+use valid8r::Validate;
 
 use super::rejection::ExtractorRejection;
 

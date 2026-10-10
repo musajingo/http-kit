@@ -191,7 +191,7 @@ pub struct AreaHttpResponse {
 ```rust,ignore
 // 1. Inject `fields: Option<Projection<AreaHttpResponseField>>` into the query DTO:
 #[http_kit_macros::projection(AreaHttpResponseField)]
-#[derive(serde::Deserialize, validator::Validate)]
+#[derive(serde::Deserialize, valid8r::Validate)]
 pub struct ListAreasQuery { /* other params */ }
 
 // 2. In the service, turn the projection into per-table pgkit column selections:
