@@ -124,3 +124,37 @@ mod sensitive_tests {
         assert!(body.contains("expected a string"), "lost the hint: {body}");
     }
 }
+
+#[cfg(test)]
+mod custom_deserializer_tests {
+    use axum::body::{Body, to_bytes};
+    use axum::extract::{FromRequest, Request};
+    use axum::response::IntoResponse;
+    use serde::Deserialize;
+    use valid8r::Validate;
+
+    use super::ValidatedJson;
+
+    #[derive(Debug, Deserialize, Validate)]
+    struct Lookup {
+        #[allow(dead_code)]
+        ip: std::net::IpAddr,
+    }
+
+    #[tokio::test]
+    async fn custom_deserializer_messages_are_replaced() {
+        let req = Request::builder()
+            .header("content-type", "application/json")
+            .body(Body::from(r#"{"ip":"top-secret"}"#))
+            .unwrap();
+        let err = ValidatedJson::<Lookup>::from_request(req, &())
+            .await
+            .unwrap_err();
+        let body = to_bytes(err.into_response().into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        assert!(!body.contains("top-secret"), "value leaked: {body}");
+        assert!(body.contains("could not deserialize value"), "got: {body}");
+    }
+}
