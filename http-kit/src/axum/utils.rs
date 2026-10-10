@@ -78,12 +78,15 @@ pub fn validation_errors_to_json(validation_errors: &ValidationErrors) -> serde_
                 errors.insert(key, validation_errors_to_json(struct_errors));
             }
             ValidationErrorsKind::List(list_errors) => {
-                let list: Vec<serde_json::Value> = list_errors
-                    .values()
-                    .map(|item_errors| validation_errors_to_json(item_errors))
+                // Keyed by the item's index so clients know which entry failed.
+                let items: serde_json::Map<String, serde_json::Value> = list_errors
+                    .iter()
+                    .map(|(index, item_errors)| {
+                        (index.to_string(), validation_errors_to_json(item_errors))
+                    })
                     .collect();
 
-                errors.insert(key, json!(list));
+                errors.insert(key, serde_json::Value::Object(items));
             }
         }
     }
@@ -307,8 +310,9 @@ mod tests {
                         "code": "length"
                     }
                 ],
-                "items": [
-                    {
+                // Keyed by index: the second item (index 1) is the invalid one.
+                "items": {
+                    "1": {
                         "id": [
                             {
                                 "message": "ID cannot be empty",
@@ -331,7 +335,7 @@ mod tests {
                             }
                         ]
                     }
-                ],
+                },
             })
         );
     }
