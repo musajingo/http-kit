@@ -3,6 +3,10 @@ use serde_json::json;
 use valid8r::{ValidationErrors, ValidationErrorsKind};
 
 /// Extracts field-level details from a JSON deserialization error.
+///
+/// The failing path becomes the details key. For map types the path contains
+/// the client-sent key: that is intentional — the sender needs it to locate
+/// the error, and paths never reach the logs (only statuses are logged).
 pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::Value> {
     let JsonRejection::JsonDataError(rejection) = rejection else {
         return None;
@@ -36,6 +40,11 @@ pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::
     None
 }
 
+/// Limitation: the allowlist below can only vouch for messages serde itself
+/// generates. A hand-written Deserialize impl that embeds input in a message
+/// mimicking an allowlisted prefix (e.g. starting with "missing field") can
+/// still leak; keep submitted values out of custom deserializer messages.
+///
 /// Sanitized message for a JSON body that failed to deserialize at the root
 /// (no field path), e.g. a bare scalar where a struct was expected.
 pub fn json_data_error_message(rejection: &JsonRejection) -> Option<String> {
