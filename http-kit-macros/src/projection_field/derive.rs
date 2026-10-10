@@ -609,6 +609,45 @@ fn classify_field(
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /// The string from a field's `#[serde(rename = "...")]`, if present.
+/// Reads `<key> = "..."` or `<key>(serialize = "...", ...)` from a serde attr.
+fn serde_string_for(metas: &Punctuated<Meta, Token![,]>, key: &str) -> Option<String> {
+    for meta in metas {
+        if !meta.path().is_ident(key) {
+            continue;
+        }
+        match meta {
+            Meta::NameValue(nv) => {
+                if let Expr::Lit(ExprLit {
+                    lit: Lit::Str(s), ..
+                }) = &nv.value
+                {
+                    return Some(s.value());
+                }
+            }
+            Meta::List(list) => {
+                let mut found = None;
+                let _ = list.parse_nested_meta(|inner| {
+                    if inner.path.is_ident("serialize") {
+                        let lit: Lit = inner.value()?.parse()?;
+                        if let Lit::Str(s) = lit {
+                            found = Some(s.value());
+                        }
+                    } else {
+                        // Consume `deserialize = "..."` without erroring.
+                        let _ = inner.value().and_then(|v| v.parse::<Lit>());
+                    }
+                    Ok(())
+                });
+                if found.is_some() {
+                    return found;
+                }
+            }
+            Meta::Path(_) => {}
+        }
+    }
+    None
+}
+
 fn serde_rename(field: &syn::Field) -> Option<String> {
     for attr in &field.attrs {
         if !attr.path().is_ident("serde") {
@@ -618,15 +657,8 @@ fn serde_rename(field: &syn::Field) -> Option<String> {
         else {
             continue;
         };
-        for meta in metas {
-            if let Meta::NameValue(nv) = meta
-                && nv.path.is_ident("rename")
-                && let Expr::Lit(ExprLit {
-                    lit: Lit::Str(s), ..
-                }) = nv.value
-            {
-                return Some(s.value());
-            }
+        if let Some(name) = serde_string_for(&metas, "rename") {
+            return Some(name);
         }
     }
     None
@@ -642,15 +674,8 @@ fn container_rename_all(input: &DeriveInput) -> Option<String> {
         else {
             continue;
         };
-        for meta in metas {
-            if let Meta::NameValue(nv) = meta
-                && nv.path.is_ident("rename_all")
-                && let Expr::Lit(ExprLit {
-                    lit: Lit::Str(s), ..
-                }) = nv.value
-            {
-                return Some(s.value());
-            }
+        if let Some(rule) = serde_string_for(&metas, "rename_all") {
+            return Some(rule);
         }
     }
     None
@@ -672,6 +697,7 @@ fn apply_rename_all(rule: Option<&str>, snake: &str) -> String {
 
 /// `snake_case` → `PascalCase`
 fn snake_to_pascal(s: &str) -> String {
+    let s = s.trim_start_matches('_');
     let mut out = String::with_capacity(s.len());
     let mut up = true;
     for ch in s.chars() {
@@ -689,6 +715,7 @@ fn snake_to_pascal(s: &str) -> String {
 
 /// `snake_case` → `camelCase`
 fn snake_to_camel(s: &str) -> String {
+    let s = s.trim_start_matches('_');
     let mut out = String::with_capacity(s.len());
     let mut up = false;
     for ch in s.chars() {

@@ -524,3 +524,36 @@ fn container_rename_all_sets_the_wire_names() {
     assert!(SnakeStyleField::parse("first_name").is_ok());
     assert!(SnakeStyleField::parse("firstName").is_err());
 }
+
+/// `rename(serialize = ...)` and leading underscores follow serde.
+#[derive(ProjectionField, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
+struct Quirks {
+    pub id: i32,
+    #[serde(rename(serialize = "outputName"))]
+    pub first_name: String,
+    pub _private_note: String,
+}
+
+#[test]
+fn serialize_rename_and_underscores_match_serde() {
+    let names = QuirksField::all_field_names();
+    assert_eq!(names, &["id", "outputName", "privateNote"]);
+
+    // Must agree with what serde actually serializes.
+    let json = serde_json::to_value(Quirks {
+        id: 1,
+        first_name: "a".into(),
+        _private_note: "b".into(),
+    })
+    .unwrap();
+    let mut keys: Vec<&str> = json
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(|k| k.as_str())
+        .collect();
+    keys.sort_unstable();
+    assert_eq!(keys, &["id", "outputName", "privateNote"]);
+}
