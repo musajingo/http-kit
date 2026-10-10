@@ -66,7 +66,7 @@ pub(crate) fn expand(input: TokenStream) -> TokenStream {
     let vis = &input.vis;
 
     // --- resource name + optional backing column enum ---
-    let (resource_name, column_ty) = match extract_struct_attrs(&input) {
+    let (resource_name, column_ty, skip_utoipa) = match extract_struct_attrs(&input) {
         Ok(v) => v,
         Err(e) => return e.to_compile_error().into(),
     };
@@ -360,6 +360,34 @@ pub(crate) fn expand(input: TokenStream) -> TokenStream {
 
     // ── Full output ───────────────────────────────────────────────────────────
 
+    // utoipa-gen still checks `T: ComposeSchema + ToSchema` for the
+    // `Projection<T>` field type even when the call site overrides the
+    // schema via `#[param(schema_with = ...)]`. These stubs satisfy the
+    // bound; their content is never rendered. `skip(utoipa)` suppresses them
+    // for consumers without a utoipa dependency.
+    let utoipa_impls = (!skip_utoipa).then(|| {
+        quote! {
+            impl ::utoipa::__dev::ComposeSchema for #enum_ident {
+                fn compose(
+                    _: ::std::vec::Vec<
+                        ::utoipa::openapi::RefOr<::utoipa::openapi::schema::Schema>,
+                    >,
+                ) -> ::utoipa::openapi::RefOr<::utoipa::openapi::schema::Schema> {
+                    ::utoipa::openapi::ObjectBuilder::new()
+                        .schema_type(::utoipa::openapi::schema::Type::String)
+                        .build()
+                        .into()
+                }
+            }
+
+            impl ::utoipa::ToSchema for #enum_ident {
+                fn name() -> ::std::borrow::Cow<'static, str> {
+                    ::std::borrow::Cow::Borrowed(::std::stringify!(#enum_ident))
+                }
+            }
+        }
+    });
+
     let output = quote! {
         #[derive(
             ::std::fmt::Debug,
@@ -410,28 +438,7 @@ pub(crate) fn expand(input: TokenStream) -> TokenStream {
             }
         }
 
-        // utoipa-gen still checks `T: ComposeSchema + ToSchema` for the
-        // `Projection<T>` field type even when the call site overrides the
-        // schema via `#[param(schema_with = ...)]`. These stubs satisfy the
-        // bound; their content is never rendered.
-        impl ::utoipa::__dev::ComposeSchema for #enum_ident {
-            fn compose(
-                _: ::std::vec::Vec<
-                    ::utoipa::openapi::RefOr<::utoipa::openapi::schema::Schema>,
-                >,
-            ) -> ::utoipa::openapi::RefOr<::utoipa::openapi::schema::Schema> {
-                ::utoipa::openapi::ObjectBuilder::new()
-                    .schema_type(::utoipa::openapi::schema::Type::String)
-                    .build()
-                    .into()
-            }
-        }
-
-        impl ::utoipa::ToSchema for #enum_ident {
-            fn name() -> ::std::borrow::Cow<'static, str> {
-                ::std::borrow::Cow::Borrowed(::std::stringify!(#enum_ident))
-            }
-        }
+        #utoipa_impls
 
         #column_impls
     };
@@ -441,12 +448,14 @@ pub(crate) fn expand(input: TokenStream) -> TokenStream {
 
 // ── Attribute parsing ─────────────────────────────────────────────────────────
 
-/// Extract `name = "..."` and `column = <Column>` from the struct's
-/// `#[projection_field(...)]`. `name` falls back to the lowercased struct name;
-/// `column` is `None` unless given.
-fn extract_struct_attrs(input: &DeriveInput) -> syn::Result<(String, Option<Path>)> {
+/// Extract `name = "..."`, `column = <Column>`, and `skip(utoipa)` from the
+/// struct's `#[projection_field(...)]`. `name` falls back to the lowercased
+/// struct name; `column` is `None` unless given; `skip(utoipa)` suppresses the
+/// generated utoipa impls for consumers without a utoipa dependency.
+fn extract_struct_attrs(input: &DeriveInput) -> syn::Result<(String, Option<Path>, bool)> {
     let mut name: Option<String> = None;
     let mut column: Option<Path> = None;
+    let mut skip_utoipa = false;
 
     for attr in &input.attrs {
         if !attr.path().is_ident("projection_field") {
@@ -465,16 +474,25 @@ fn extract_struct_attrs(input: &DeriveInput) -> syn::Result<(String, Option<Path
             } else if meta.path.is_ident("column") {
                 column = Some(meta.value()?.parse::<Path>()?);
                 Ok(())
+            } else if meta.path.is_ident("skip") {
+                meta.parse_nested_meta(|inner| {
+                    if inner.path.is_ident("utoipa") {
+                        skip_utoipa = true;
+                        Ok(())
+                    } else {
+                        Err(inner.error("unknown skip target; expected `utoipa`"))
+                    }
+                })
             } else {
                 Err(meta.error(
-                    "unrecognised key in `#[projection_field(...)]`; expected `name` or `column`",
+                    "unrecognised key in `#[projection_field(...)]`; expected `name`, `column`, or `skip(...)`",
                 ))
             }
         })?;
     }
 
     let name = name.unwrap_or_else(|| input.ident.to_string().to_lowercase());
-    Ok((name, column))
+    Ok((name, column, skip_utoipa))
 }
 
 // ── Field classification ──────────────────────────────────────────────────────

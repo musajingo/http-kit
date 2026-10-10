@@ -468,3 +468,23 @@ fn shared_column_attr_coexists_with_partial_response_derive() {
     // The PartialResponse companion was still generated alongside.
     let _ = PartialCombo::default();
 }
+
+// ─── skip(utoipa) ──────────────────────────────────────────────────────────────
+
+#[derive(http_kit::projection::ProjectionField)]
+#[projection_field(name = "plain", skip(utoipa))]
+#[allow(dead_code)]
+struct PlainNoUtoipa {
+    id: i32,
+    display_name: String,
+}
+
+#[test]
+fn skip_utoipa_struct_still_parses() {
+    use http_kit::projection::ProjectionField;
+    assert!(PlainNoUtoipaField::parse("displayName").is_ok());
+    assert_eq!(
+        PlainNoUtoipaField::all_field_names(),
+        &["id", "displayName"]
+    );
+}

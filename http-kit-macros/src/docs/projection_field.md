@@ -76,6 +76,7 @@ Key validation rules (a violation makes parsing fail with a typed error):
 | -------------------------- | ---------------------------------------------------------------------------------------- | ---------------------- |
 | `name = "country"`         | The resource name surfaced in validation error messages                                  | lowercased struct name |
 | `column = CountriesColumn` | Generate the `IntoColumnSelections` impl mapping fields to `CountriesColumn` (see below) | none — not generated   |
+| `skip(utoipa)`             | Omit the generated utoipa impls, for crates without a `utoipa` dependency                 | utoipa impls emitted   |
 
 ## Field attributes
 

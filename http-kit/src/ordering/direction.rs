@@ -15,7 +15,7 @@ pub enum OrderByDirection {
 }
 
 /// Convert to `pgkit`'s `OrderByDirection`.
-#[cfg(feature = "with-pgkit")]
+#[cfg(feature = "pgkit")]
 impl From<OrderByDirection> for ::pgkit::ordering::OrderByDirection {
     fn from(d: OrderByDirection) -> Self {
         match d {

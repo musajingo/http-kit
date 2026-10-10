@@ -57,7 +57,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use valid8r::{Validate, ValidationError, ValidationErrors};
 
-#[cfg(feature = "with-pgkit")]
+#[cfg(feature = "pgkit")]
 use super::column_selections::IntoColumnSelections;
 use super::error::{ProjectionError, ProjectionErrors};
 use super::field::ProjectionField;
@@ -303,7 +303,7 @@ impl<'a, T: ProjectionField> IntoIterator for &'a Projection<T> {
     }
 }
 
-#[cfg(feature = "with-pgkit")]
+#[cfg(feature = "pgkit")]
 impl<T: IntoColumnSelections> Projection<T> {
     /// Partition the resolved fields into column selection(s).
     /// See [`IntoColumnSelections`]
