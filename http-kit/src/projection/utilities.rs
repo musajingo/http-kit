@@ -21,9 +21,11 @@ impl<T: Hash + Eq> Default for ParsingState<T> {
     }
 }
 
-/// Split a wire name into `(namespace, leaf)`. Top-level names return `("", name)`.
+/// Split a wire name into `(namespace, leaf)` at the last dot, so nested
+/// namespaces stay intact (`child.grand.name` -> `("child.grand", "name")`).
+/// Top-level names return `("", name)`.
 pub(crate) fn split_ns(name: &str) -> (&str, &str) {
-    match name.split_once('.') {
+    match name.rsplit_once('.') {
         Some((ns, leaf)) => (ns, leaf),
         None => ("", name),
     }

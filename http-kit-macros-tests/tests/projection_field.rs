@@ -488,3 +488,21 @@ fn skip_utoipa_struct_still_parses() {
         &["id", "displayName"]
     );
 }
+
+#[test]
+fn deep_nested_all_selects_the_whole_namespace() {
+    use http_kit::projection::Projection;
+
+    let p = Projection::<DeepField>::from("id,outer.nest.all".to_string());
+    assert!(p.is_valid(), "errors: {:?}", p.errors());
+    let names: Vec<&str> = p.fields().iter().map(|f| f.as_ref()).collect();
+    assert!(names.contains(&"outer.nest.id"), "got: {names:?}");
+    assert!(names.contains(&"outer.nest.a"), "got: {names:?}");
+
+    // Exclusion at depth: implicit-all for the deep namespace.
+    let p = Projection::<DeepField>::from("id,-outer.nest.a".to_string());
+    assert!(p.is_valid(), "errors: {:?}", p.errors());
+    let names: Vec<&str> = p.fields().iter().map(|f| f.as_ref()).collect();
+    assert!(names.contains(&"outer.nest.id"), "got: {names:?}");
+    assert!(!names.contains(&"outer.nest.a"), "got: {names:?}");
+}
