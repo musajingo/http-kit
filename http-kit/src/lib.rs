@@ -13,6 +13,6 @@ pub mod response;
 #[cfg(feature = "projection")]
 pub mod projection;
 
-/// Validated Axum request extractors and service-layer validation errors.
+/// Validated Axum request extractors.
 #[cfg(feature = "axum")]
 pub mod axum;
