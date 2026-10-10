@@ -87,3 +87,40 @@ mod tests {
         assert_eq!(status, StatusCode::BAD_REQUEST);
     }
 }
+
+#[cfg(test)]
+mod sensitive_tests {
+    use axum::body::{Body, to_bytes};
+    use axum::extract::{FromRequest, Request};
+    use axum::http::StatusCode;
+    use axum::response::IntoResponse;
+    use serde::Deserialize;
+    use valid8r::Validate;
+
+    use super::ValidatedJson;
+
+    #[derive(Debug, Deserialize, Validate)]
+    struct Credentials {
+        #[validate(sensitive)]
+        #[allow(dead_code)]
+        pin: String,
+    }
+
+    #[tokio::test]
+    async fn type_mismatch_never_echoes_the_submitted_value() {
+        let req = Request::builder()
+            .header("content-type", "application/json")
+            .body(Body::from(r#"{"pin":123456}"#))
+            .unwrap();
+        let err = ValidatedJson::<Credentials>::from_request(req, &())
+            .await
+            .unwrap_err();
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        assert!(!body.contains("123456"), "value leaked: {body}");
+        assert!(body.contains("expected a string"), "lost the hint: {body}");
+    }
+}

@@ -35,7 +35,7 @@ impl IntoResponse for ExtractorRejection {
         let error_details = match self {
             ExtractorRejection::FormRejection(err) => {
                 let _span = span!(Level::DEBUG, "form_rejection_error").entered();
-                debug!(message = "Form data rejection", error = %err);
+                debug!(message = "Form data rejection", status = %err.status());
 
                 if matches!(err, FormRejection::InvalidFormContentType(_)) {
                     HttpErrorResponse::unsupported_media_type(err.body_text())
@@ -47,7 +47,7 @@ impl IntoResponse for ExtractorRejection {
             }
             ExtractorRejection::JsonRejection(err) => {
                 let _span = span!(Level::DEBUG, "json_rejection_error").entered();
-                debug!(message = "JSON data rejection", error = %err);
+                debug!(message = "JSON data rejection", status = %err.status());
 
                 // 415 for missing/wrong Content-Type, 413 when the body exceeded
                 // the configured limit, 422 with field-level details when a field
@@ -64,7 +64,7 @@ impl IntoResponse for ExtractorRejection {
             }
             ExtractorRejection::QueryRejection(err) => {
                 let _span = span!(Level::DEBUG, "query_rejection_error").entered();
-                debug!(message = "Query string rejection", error = %err);
+                debug!(message = "Query string rejection", status = %err.status());
 
                 HttpErrorResponse::bad_request(err.body_text())
             }

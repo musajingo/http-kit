@@ -21,6 +21,7 @@ pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::
             let message = message
                 .rsplit_once(" at line ")
                 .map_or(message.as_str(), |(message, _)| message);
+            let message = drop_submitted_value(message);
 
             let mut details = serde_json::Map::new();
             details.insert(
@@ -33,6 +34,21 @@ pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::
     }
 
     None
+}
+
+/// Serde messages like `invalid type: integer `123456`, expected a string`
+/// echo the submitted value, which may be a credential. Keep only what was
+/// expected.
+fn drop_submitted_value(message: &str) -> String {
+    for prefix in ["invalid type", "invalid value", "unknown variant"] {
+        if message.starts_with(prefix) {
+            return match message.rsplit_once(", expected ") {
+                Some((_, expected)) => format!("{prefix}, expected {expected}"),
+                None => prefix.to_string(),
+            };
+        }
+    }
+    message.to_string()
 }
 
 /// Converts nested validation errors into API error details.
