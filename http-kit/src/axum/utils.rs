@@ -65,6 +65,9 @@ fn drop_submitted_value(message: &str) -> String {
 }
 
 /// Converts nested validation errors into API error details.
+///
+/// Policy: error keys are camelCased, so payload structs must use
+/// `#[serde(rename_all = "camelCase")]` for keys to match the wire names.
 pub fn validation_errors_to_json(validation_errors: &ValidationErrors) -> serde_json::Value {
     let mut errors = serde_json::Map::new();
 

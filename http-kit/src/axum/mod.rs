@@ -4,6 +4,8 @@
 //! Payload types need `serde::Deserialize` and `Validate` from the
 //! [`valid8r`](https://crates.io/crates/valid8r) crate.
 //! Invalid payloads return structured API errors before the handler runs.
+//! Error details key fields in camelCase: payload structs must use
+//! `#[serde(rename_all = "camelCase")]` for error keys to match the wire.
 //!
 //! ```rust
 //! use http_kit::axum::{ExtractorRejection, ValidatedForm, ValidatedJson, ValidatedQuery};
