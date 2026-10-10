@@ -1,0 +1,5 @@
+error: `serde(serialize_with/with)` is not supported by PartialResponse: the partial wraps the field in an extra `Option`, so the custom serializer's signature no longer matches. Implement `Serialize` on the field's type instead, or skip the field.
+ --> tests/ui/partial_response_serialize_with.rs:7:13
+  |
+7 |     #[serde(serialize_with = "as_str")]
+  |             ^^^^^^^^^^^^^^^^^^^^^^^^^

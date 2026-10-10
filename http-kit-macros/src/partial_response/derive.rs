@@ -268,7 +268,9 @@ fn extract_struct_attrs(input: &DeriveInput) -> syn::Result<(String, Option<Path
 
 /// Rebuilds a field's `#[serde(...)]` attributes for the partial field, dropping
 /// any `skip_serializing_if` entry (the macro emits its own). An attribute that
-/// held only `skip_serializing_if` is dropped entirely.
+/// held only `skip_serializing_if` is dropped entirely. `serialize_with` / `with`
+/// are rejected: the partial wraps the field in an extra `Option`, so a custom
+/// serializer's signature would no longer match.
 fn forwarded_serde_attrs(field: &Field) -> syn::Result<Vec<Attribute>> {
     let mut out = Vec::new();
     for attr in &field.attrs {
@@ -276,6 +278,17 @@ fn forwarded_serde_attrs(field: &Field) -> syn::Result<Vec<Attribute>> {
             continue;
         }
         let metas = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
+        for meta in &metas {
+            if meta.path().is_ident("serialize_with") || meta.path().is_ident("with") {
+                return Err(syn::Error::new_spanned(
+                    meta,
+                    "`serde(serialize_with/with)` is not supported by PartialResponse: \
+                     the partial wraps the field in an extra `Option`, so the custom \
+                     serializer's signature no longer matches. Implement `Serialize` \
+                     on the field's type instead, or skip the field.",
+                ));
+            }
+        }
         let kept: Punctuated<Meta, Token![,]> = metas
             .into_iter()
             .filter(|m| !m.path().is_ident("skip_serializing_if"))
