@@ -41,11 +41,15 @@ pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::
 /// expected, and allowlist the shapes we know are value-free: anything else
 /// (e.g. a custom Deserialize impl's message) may embed the input.
 fn drop_submitted_value(message: &str) -> String {
+    // `unknown field` / `duplicate field` echo client-sent key names, which
+    // are also input; only `missing field` names come from our own schema.
     for prefix in [
         "invalid type",
         "invalid value",
         "invalid length",
         "unknown variant",
+        "unknown field",
+        "duplicate field",
     ] {
         if message.starts_with(prefix) {
             return match message.rsplit_once(", expected ") {
@@ -54,11 +58,8 @@ fn drop_submitted_value(message: &str) -> String {
             };
         }
     }
-    // These carry field names (schema, not input), safe to pass through.
-    for prefix in ["unknown field", "missing field", "duplicate field"] {
-        if message.starts_with(prefix) {
-            return message.to_string();
-        }
+    if message.starts_with("missing field") {
+        return message.to_string();
     }
     "could not deserialize value".to_string()
 }
