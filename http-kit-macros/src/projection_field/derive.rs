@@ -75,8 +75,10 @@ pub(crate) fn expand(input: TokenStream) -> TokenStream {
     let mut leaf_fields: Vec<LeafField> = Vec::new();
     let mut nested_fields: Vec<NestedField> = Vec::new();
 
+    let rename_all = container_rename_all(&input);
+
     for field in fields {
-        match classify_field(field) {
+        match classify_field(field, rename_all.as_deref()) {
             Ok(Some(Classification::Leaf(lf))) => leaf_fields.push(lf),
             Ok(Some(Classification::Nested(nf))) => nested_fields.push(*nf),
             Ok(None) => {} // projection_skip
@@ -502,7 +504,10 @@ enum Classification {
     Nested(Box<NestedField>),
 }
 
-fn classify_field(field: &syn::Field) -> syn::Result<Option<Classification>> {
+fn classify_field(
+    field: &syn::Field,
+    rename_all: Option<&str>,
+) -> syn::Result<Option<Classification>> {
     let mut is_skip = false;
     let mut nested_type: Option<Type> = None;
     let mut pf_column: Option<Path> = None; // #[projection_field(column = …)]
@@ -577,10 +582,10 @@ fn classify_field(field: &syn::Field) -> syn::Result<Option<Classification>> {
     // of panicking on the `r#` prefix.
     let snake = field_ident.unraw().to_string();
     let variant_ident = Ident::new(&snake_to_pascal(&snake), field_ident.span());
-    // A field-level `#[serde(rename = "...")]` sets the response key, so it must
-    // also be the `?fields=` selection token — otherwise selection and the
-    // serialized response disagree. Fall back to the camelCased field name.
-    let wire_name = serde_rename(field).unwrap_or_else(|| snake_to_camel(&snake));
+    // The `?fields=` token must equal the serialized key, so follow serde:
+    // field-level `rename`, else the container's `rename_all`, else the raw
+    // field name.
+    let wire_name = serde_rename(field).unwrap_or_else(|| apply_rename_all(rename_all, &snake));
 
     if let Some(field_enum_type) = nested_type {
         let namespace = wire_name.clone(); // camelCase of field name
@@ -625,6 +630,44 @@ fn serde_rename(field: &syn::Field) -> Option<String> {
         }
     }
     None
+}
+
+/// The string from the struct's `#[serde(rename_all = "...")]`, if present.
+fn container_rename_all(input: &DeriveInput) -> Option<String> {
+    for attr in &input.attrs {
+        if !attr.path().is_ident("serde") {
+            continue;
+        }
+        let Ok(metas) = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+        else {
+            continue;
+        };
+        for meta in metas {
+            if let Meta::NameValue(nv) = meta
+                && nv.path.is_ident("rename_all")
+                && let Expr::Lit(ExprLit {
+                    lit: Lit::Str(s), ..
+                }) = nv.value
+            {
+                return Some(s.value());
+            }
+        }
+    }
+    None
+}
+
+/// Applies serde's `rename_all` rule to a snake_case field ident. No rule
+/// means serde serializes the raw field name.
+fn apply_rename_all(rule: Option<&str>, snake: &str) -> String {
+    match rule {
+        Some("camelCase") => snake_to_camel(snake),
+        Some("PascalCase") => snake_to_pascal(snake),
+        Some("lowercase") | Some("snake_case") => snake.to_string(),
+        Some("UPPERCASE") | Some("SCREAMING_SNAKE_CASE") => snake.to_uppercase(),
+        Some("kebab-case") => snake.replace('_', "-"),
+        Some("SCREAMING-KEBAB-CASE") => snake.to_uppercase().replace('_', "-"),
+        _ => snake.to_string(),
+    }
 }
 
 /// `snake_case` → `PascalCase`

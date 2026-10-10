@@ -6,7 +6,8 @@ use serde::Serialize;
 // ── Test fixtures ─────────────────────────────────────────────────────────────
 
 /// A flat, leaf-only struct.
-#[derive(ProjectionField)]
+#[derive(ProjectionField, Serialize)]
+#[serde(rename_all = "camelCase")]
 #[allow(dead_code)]
 struct Country {
     pub id: i32,
@@ -482,10 +483,11 @@ struct PlainNoUtoipa {
 #[test]
 fn skip_utoipa_struct_still_parses() {
     use http_kit::projection::ProjectionField;
-    assert!(PlainNoUtoipaField::parse("displayName").is_ok());
+    // No serde attrs on the struct: serde serializes raw field names.
+    assert!(PlainNoUtoipaField::parse("display_name").is_ok());
     assert_eq!(
         PlainNoUtoipaField::all_field_names(),
-        &["id", "displayName"]
+        &["id", "display_name"]
     );
 }
 
@@ -505,4 +507,20 @@ fn deep_nested_all_selects_the_whole_namespace() {
     let names: Vec<&str> = p.fields().iter().map(|f| f.as_ref()).collect();
     assert!(names.contains(&"outer.nest.id"), "got: {names:?}");
     assert!(!names.contains(&"outer.nest.a"), "got: {names:?}");
+}
+
+/// Wire names follow the container's `rename_all`.
+#[derive(ProjectionField, Serialize)]
+#[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
+struct SnakeStyle {
+    pub id: i32,
+    pub first_name: String,
+}
+
+#[test]
+fn container_rename_all_sets_the_wire_names() {
+    assert_eq!(SnakeStyleField::all_field_names(), &["id", "first_name"]);
+    assert!(SnakeStyleField::parse("first_name").is_ok());
+    assert!(SnakeStyleField::parse("firstName").is_err());
 }
