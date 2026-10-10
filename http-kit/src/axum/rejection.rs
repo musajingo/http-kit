@@ -30,6 +30,15 @@ pub enum ExtractorRejection {
     Validation(#[from] ValidationErrors),
 }
 
+/// Axum's rejection body text is `"<prefix>: <serde message>"`; the serde part
+/// can echo submitted values, so sanitize it and keep the prefix.
+fn sanitize_body_text(text: String) -> String {
+    match text.split_once(": ") {
+        Some((prefix, rest)) => format!("{prefix}: {}", utils::drop_submitted_value(rest)),
+        None => text,
+    }
+}
+
 impl IntoResponse for ExtractorRejection {
     fn into_response(self) -> Response {
         let error_details = match self {
@@ -42,7 +51,7 @@ impl IntoResponse for ExtractorRejection {
                 } else if err.status() == StatusCode::PAYLOAD_TOO_LARGE {
                     HttpErrorResponse::payload_too_large("The request body is too large.")
                 } else {
-                    HttpErrorResponse::bad_request(err.body_text())
+                    HttpErrorResponse::bad_request(sanitize_body_text(err.body_text()))
                 }
             }
             ExtractorRejection::JsonRejection(err) => {
@@ -58,6 +67,9 @@ impl IntoResponse for ExtractorRejection {
                     HttpErrorResponse::payload_too_large("The request body is too large.")
                 } else if let Some(details) = utils::json_data_error_details(&err) {
                     HttpErrorResponse::validation_error("Validation failed", Some(details))
+                } else if let Some(message) = utils::json_data_error_message(&err) {
+                    // Root-level data error: no field to attribute it to.
+                    HttpErrorResponse::bad_request(message)
                 } else {
                     HttpErrorResponse::bad_request(err.body_text())
                 }
@@ -66,7 +78,7 @@ impl IntoResponse for ExtractorRejection {
                 let _span = span!(Level::DEBUG, "query_rejection_error").entered();
                 debug!(message = "Query string rejection", status = %err.status());
 
-                HttpErrorResponse::bad_request(err.body_text())
+                HttpErrorResponse::bad_request(sanitize_body_text(err.body_text()))
             }
             ExtractorRejection::Validation(validation_errors) => {
                 let _span = span!(Level::DEBUG, "payload_validation_error").entered();
@@ -200,5 +212,76 @@ mod tests {
         let api_response_json = deserialize_response_to_value(response).await;
 
         assert_eq!(api_response_json["error"]["details"], json!({}));
+    }
+}
+
+#[cfg(test)]
+mod redaction_tests {
+    use axum::body::{Body, to_bytes};
+    use axum::extract::{FromRequest, FromRequestParts, Request};
+    use serde::Deserialize;
+    use valid8r::Validate;
+
+    use super::*;
+    use crate::axum::{ValidatedForm, ValidatedJson, ValidatedQuery};
+
+    #[derive(Debug, Deserialize, Validate)]
+    struct Payload {
+        #[allow(dead_code)]
+        kind: Kind,
+    }
+
+    #[derive(Debug, Deserialize)]
+    enum Kind {
+        #[serde(rename = "good")]
+        #[allow(dead_code)]
+        Good,
+    }
+
+    async fn body_of(response: Response) -> String {
+        let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        String::from_utf8(bytes.to_vec()).unwrap()
+    }
+
+    #[tokio::test]
+    async fn root_json_error_never_echoes_the_body() {
+        let req = Request::builder()
+            .header("content-type", "application/json")
+            .body(Body::from("123456"))
+            .unwrap();
+        let err = ValidatedJson::<Payload>::from_request(req, &())
+            .await
+            .unwrap_err();
+        let body = body_of(err.into_response()).await;
+        assert!(!body.contains("123456"), "leaked: {body}");
+        assert!(body.contains("expected"), "lost the hint: {body}");
+    }
+
+    #[tokio::test]
+    async fn form_error_never_echoes_the_value() {
+        let req = Request::builder()
+            .method("POST")
+            .header("content-type", "application/x-www-form-urlencoded")
+            .body(Body::from("kind=secret-input"))
+            .unwrap();
+        let err = ValidatedForm::<Payload>::from_request(req, &())
+            .await
+            .unwrap_err();
+        let body = body_of(err.into_response()).await;
+        assert!(!body.contains("secret-input"), "leaked: {body}");
+    }
+
+    #[tokio::test]
+    async fn query_error_never_echoes_the_value() {
+        let req = Request::builder()
+            .uri("/?kind=secret-input")
+            .body(Body::empty())
+            .unwrap();
+        let (mut parts, _) = req.into_parts();
+        let err = ValidatedQuery::<Payload>::from_request_parts(&mut parts, &())
+            .await
+            .unwrap_err();
+        let body = body_of(err.into_response()).await;
+        assert!(!body.contains("secret-input"), "leaked: {body}");
     }
 }

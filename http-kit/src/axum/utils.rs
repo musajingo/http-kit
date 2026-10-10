@@ -36,11 +36,31 @@ pub fn json_data_error_details(rejection: &JsonRejection) -> Option<serde_json::
     None
 }
 
+/// Sanitized message for a JSON body that failed to deserialize at the root
+/// (no field path), e.g. a bare scalar where a struct was expected.
+pub fn json_data_error_message(rejection: &JsonRejection) -> Option<String> {
+    let JsonRejection::JsonDataError(rejection) = rejection else {
+        return None;
+    };
+    let mut source = std::error::Error::source(rejection);
+    while let Some(err) = source {
+        if let Some(err) = err.downcast_ref::<serde_path_to_error::Error<serde_json::Error>>() {
+            let message = err.inner().to_string();
+            let message = message
+                .rsplit_once(" at line ")
+                .map_or(message.as_str(), |(message, _)| message);
+            return Some(drop_submitted_value(message));
+        }
+        source = err.source();
+    }
+    None
+}
+
 /// Serde messages like `invalid type: integer `123456`, expected a string`
 /// echo the submitted value, which may be a credential. Keep only what was
 /// expected, and allowlist the shapes we know are value-free: anything else
 /// (e.g. a custom Deserialize impl's message) may embed the input.
-fn drop_submitted_value(message: &str) -> String {
+pub(super) fn drop_submitted_value(message: &str) -> String {
     // `unknown field` / `duplicate field` echo client-sent key names, which
     // are also input; only `missing field` names come from our own schema.
     for prefix in [
