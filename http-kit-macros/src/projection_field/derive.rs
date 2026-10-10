@@ -14,7 +14,7 @@ use syn::{
 struct LeafField {
     /// PascalCase variant identifier, e.g. `CreatedAt`.
     variant_ident: Ident,
-    /// camelCase wire name, e.g. `"createdAt"`.
+    /// Serialize-side wire name, e.g. `"createdAt"`.
     wire_name: String,
     /// Explicit column path overriding the name-match, e.g. `CountriesColumn::FullName`.
     column_override: Option<Path>,
@@ -25,7 +25,7 @@ struct NestedField {
     variant_ident: Ident,
     /// snake_case field name, e.g. `country`.
     snake_name: String,
-    /// camelCase namespace, e.g. `"country"`.
+    /// Serialize-side namespace, e.g. `"country"`.
     namespace: String,
     /// The `*Field` enum type, e.g. `CountryField`.
     field_enum_type: Type,
@@ -588,7 +588,7 @@ fn classify_field(
     let wire_name = serde_rename(field).unwrap_or_else(|| apply_rename_all(rename_all, &snake));
 
     if let Some(field_enum_type) = nested_type {
-        let namespace = wire_name.clone(); // camelCase of field name
+        let namespace = wire_name.clone();
         let static_prefix = snake.to_uppercase().replace('-', "_");
         Ok(Some(Classification::Nested(Box::new(NestedField {
             variant_ident,

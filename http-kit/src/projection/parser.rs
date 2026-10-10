@@ -1,56 +1,4 @@
-//! Parses the `?fields=` query parameter into a typed [`Projection`].
-//!
-//! # Syntax
-//!
-//! The input is a comma-separated list of tokens. Whitespace around each
-//! token is trimmed. Each token is one of:
-//!
-//! | Token form  | Meaning                                                       |
-//! |-------------|---------------------------------------------------------------|
-//! | `field`     | Include the top-level field `field`.                          |
-//! | `-field`    | Exclude the top-level field `field` (implies "all others").   |
-//! | `ns.field`  | Include the nested field `field` of embedded resource `ns`.   |
-//! | `-ns.field` | Exclude the nested field `field` of embedded resource `ns`.   |
-//! | `all`       | Include every top-level field.                                |
-//! | `ns.all`    | Include every field of the embedded resource `ns`.            |
-//!
-//! Embedded resources are addressed by a namespace prefix, e.g.
-//! `country.iso2` selects the `iso2` field of an embedded `country` resource.
-//!
-//! # Selection modes per namespace
-//!
-//! For each namespace (top-level is the empty namespace `""`), the parser
-//! determines one of three modes:
-//!
-//! - **Includes-only**: only the explicitly listed fields are returned.
-//!   Example: `id,name`.
-//! - **Explicit `all` (with optional exclusions)**: every field of the
-//!   namespace, minus any `-field` tokens.
-//!   Example: `all,-createdAt,-updatedAt,-deletedAt`.
-//! - **Implicit `all` (exclusions only)**: when a namespace appears only as
-//!   exclusions, it behaves as if `all` were present.
-//!   Example: `-createdAt` is equivalent to `all,-createdAt`.
-//!
-//! # Validation rules
-//!
-//! Parsing succeeds only when the input satisfies all of the following:
-//!
-//! - The input is non-empty after trimming
-//!   ([`ProjectionError::Empty`]).
-//! - Every token names a known field or `all` keyword
-//!   ([`ProjectionError::InvalidField`]). `-all` and `-ns.all` are not
-//!   allowed; `all` may only be added, not negated. Empty tokens
-//!   (`id,,name`) and a lone `-` are invalid fields.
-//! - The top-level namespace must be referenced at least once — selecting
-//!   only embedded fields is not allowed
-//!   ([`ProjectionError::TopLevelMissing`]).
-//! - Within a single namespace, `all` cannot be combined with explicit
-//!   inclusions ([`ProjectionError::AllWithInclusions`]); only exclusions
-//!   may accompany `all`.
-//! - Within a single namespace, explicit inclusions and exclusions cannot
-//!   be mixed ([`ProjectionError::AmbiguousSelection`]).
-//! - A namespace cannot resolve to zero fields
-//!   ([`ProjectionError::AllExcluded`]).
+//! Parses the `?fields=` query parameter. See [`Projection`] for syntax and validation.
 
 use std::collections::HashMap;
 
@@ -85,18 +33,37 @@ fn push_invalid_field(
     errors.push(err);
 }
 
-/// Selects which fields (and embedded-resource fields) to return in the response.
+/// Parses requested response fields. The application builds the selected response.
 ///
-/// Pass a comma-separated list. Use `all` for every field, prefix a field
-/// with `-` to exclude it, and use a dotted `namespace.field` to address
-/// an embedded resource.
+/// # Selection syntax
 ///
-/// Examples:
-/// - `id,name` — just these fields
-/// - `all` — every field
-/// - `all,-createdAt,-updatedAt,-deletedAt` — every field except these
-/// - `id,name,country.iso2` — these fields, plus only `iso2` of the embedded `country`
-/// - `all,country.all` — every field, including every field of the embedded `country`
+/// Input is a comma-separated list; whitespace around tokens is trimmed.
+/// Field names follow the implementation of [`ProjectionField`].
+///
+/// | Token | Meaning |
+/// | --- | --- |
+/// | `id,name` | Include these top-level fields |
+/// | `all` | Include every top-level field |
+/// | `-name` or `all,-name` | Include every top-level field except `name` |
+/// | `id,child.name` | Include `id` and the embedded field `child.name` |
+/// | `id,child.all` | Include `id` and every field in `child` |
+/// | `id,child.grand.all` | Include `id` and every field in `child.grand` |
+///
+/// Each namespace is selected separately. `all` selects only that namespace's
+/// fields, not descendants. Exclusions imply `all` in their namespace.
+///
+/// # Validation
+///
+/// - Input must be nonempty and field names must be known. Empty tokens,
+///   a lone `-`, and negating `all` (including `-child.all`) are invalid.
+/// - The top-level namespace must be referenced; embedded fields alone are invalid.
+/// - Within a namespace, inclusions cannot mix with exclusions or `all`.
+///   `all` can mix with exclusions.
+/// - Every referenced namespace must resolve to at least one field.
+///
+/// `From<String>` and deserialization store parsing errors rather than rejecting
+/// the input. Check [`Self::is_valid`] or call [`Validate::validate`] before using
+/// the fields.
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(from = "String", bound = "T: ProjectionField + Serialize")]
 pub struct Projection<T: ProjectionField> {

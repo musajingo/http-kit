@@ -68,11 +68,23 @@ impl CursorArgs {
                 if meta.path.is_ident("default_limit") {
                     let val: syn::LitInt = meta.value()?.parse()?;
                     default_limit = val.base10_parse()?;
+                    if default_limit == 0 {
+                        return Err(syn::Error::new_spanned(
+                            val,
+                            "`default_limit` must be at least 1",
+                        ));
+                    }
                     return Ok(());
                 }
                 if meta.path.is_ident("max_limit") {
                     let val: syn::LitInt = meta.value()?.parse()?;
                     max_limit = val.base10_parse()?;
+                    if max_limit == 0 {
+                        return Err(syn::Error::new_spanned(
+                            val,
+                            "`max_limit` must be at least 1",
+                        ));
+                    }
                     return Ok(());
                 }
                 Err(meta.error(

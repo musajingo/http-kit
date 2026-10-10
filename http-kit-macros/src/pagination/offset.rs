@@ -69,11 +69,23 @@ impl OffsetArgs {
                 if meta.path.is_ident("default_page_size") {
                     let val: syn::LitInt = meta.value()?.parse()?;
                     default_page_size = val.base10_parse()?;
+                    if default_page_size == 0 {
+                        return Err(syn::Error::new_spanned(
+                            val,
+                            "`default_page_size` must be at least 1",
+                        ));
+                    }
                     return Ok(());
                 }
                 if meta.path.is_ident("max_page_size") {
                     let val: syn::LitInt = meta.value()?.parse()?;
                     max_page_size = val.base10_parse()?;
+                    if max_page_size == 0 {
+                        return Err(syn::Error::new_spanned(
+                            val,
+                            "`max_page_size` must be at least 1",
+                        ));
+                    }
                     return Ok(());
                 }
                 Err(meta.error(

@@ -80,6 +80,7 @@ pub(crate) fn parse_named_field(tokens: TokenStream2) -> syn::Field {
 }
 
 /// Whether the struct's `#[derive(...)]` list mentions `IntoParams`.
+/// Only the final path segment is checked; renamed imports are not recognized.
 ///
 /// Used to gate emission of `#[param(...)]` attrs, which utoipa only accepts
 /// on structs that derive `IntoParams`.

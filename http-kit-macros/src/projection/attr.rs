@@ -79,8 +79,9 @@ pub(crate) fn expand(attr: TokenStream, item: TokenStream) -> TokenStream {
     // `schema_with` (into_params.rs — `.schema(..).build()` returns before it ever
     // calls `.required(..)`), so the attribute is silently ignored and the parameter
     // is advertised as optional because the field is `Option<_>`. The field must stay
-    // `Option<_>` for the `required` validator to fire on an absent `?fields=`, so the
-    // spec is corrected after the fact in `docs::api_docs::require_projection_fields`.
+    // `Option<_>` for the `required` validator to fire on an absent `?fields=`.
+    // Applications must adjust the generated OpenAPI document if they need its
+    // required flag to match validation.
     let param_attr = emit_utoipa.then(|| {
         quote! { #[param(schema_with = #schema_fn_ident)] }
     });

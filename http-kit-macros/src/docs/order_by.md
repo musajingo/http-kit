@@ -1,44 +1,28 @@
-Injects ordering fields (`order_by`, `order_dir`) into a struct.
+Adds `order_by: Option<Fields>` and
+`order_dir: http_kit::ordering::OrderByDirection` query fields.
 
-Takes one required positional argument: the enum that represents sortable
-fields. The enum does **not** need to implement `Default` — `order_by`
-is wrapped in `Option<_>` so an absent value deserializes to `None`,
-and the service layer picks a fallback (typically the table PK).
+Serde defaults are no sort field and ascending direction. The application
+chooses a fallback field and applies the ordering. `Fields` must deserialize,
+but does not need `Default`.
 
-## Generated fields
+```rust,ignore
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum SortField { Name }
 
-| Field       | Type                                     | Default                       |
-| ----------- | ---------------------------------------- | ----------------------------- |
-| `order_by`  | `Option<FieldsEnum>`                     | `None`                        |
-| `order_dir` | `::http_kit::ordering::OrderByDirection` | `OrderByDirection::default()` |
+#[http_kit_macros::order_by(SortField)]
+#[derive(serde::Deserialize)]
+struct ListQuery {}
 
-## Generated attributes (suppressible via `skip(...)`)
-
-- `#[serde(default)]` on both fields — suppressed with `skip(serde)`
-
-## Syntax
-
-```text
-#[order_by(MyOrderByFields)]
-#[order_by(MyOrderByFields, skip(serde))]
+let query: ListQuery = serde_json::from_str("{}").unwrap();
+assert!(query.order_by.is_none());
+assert_eq!(query.order_dir, http_kit::ordering::OrderByDirection::Asc);
 ```
 
-## Example
+Put the attribute before derives. Add direct `http-kit`, Serde (with
+`derive`), and Serde JSON dependencies for this example. Ordering types
+are always available in `http-kit`.
 
-```ignore
-#[http_kit_macros::order_by(UserOrderByFields)]
-#[derive(Debug, serde::Deserialize)]
-pub struct ListUsersQuery {
-    pub search: Option<String>,
-}
-
-// Injected: order_by (default None — caller did not specify),
-//           order_dir (default OrderByDirection::default())
-let q: ListUsersQuery = serde_json::from_str("{}").unwrap();
-assert!(q.order_by.is_none());
-```
-
-## Requirements
-
-Consumer crates must depend on `http-kit` with the `ordering` feature
-enabled for `OrderByDirection` to be in scope.
+`skip(serde)` omits defaults. The macro adds parameter attributes when a derive
+path ends in `IntoParams`; renamed imports are not recognized.
+`skip(utoipa)` suppresses those attributes.

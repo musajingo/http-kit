@@ -13,8 +13,8 @@
 //! producing confusing validation errors even though the client never
 //! asked for that column.
 //!
-//! Consumer crates must depend on `http-kit` with the `ordering` feature enabled
-//! for `OrderByDirection` to be in scope.
+//! Consumer crates must depend on `http-kit` for `OrderByDirection`.
+//! Ordering types are available without additional features.
 //!
 //! An optional `skip(serde)` argument suppresses the `#[serde(default)]`
 //! attributes on both fields:

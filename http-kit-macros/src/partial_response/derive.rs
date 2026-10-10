@@ -132,7 +132,7 @@ pub(crate) fn expand(input: TokenStream) -> TokenStream {
     };
 
     let output = quote! {
-        // `<T>PartialResponse` companion struct. Owns the response shape
+        // `Partial{Struct}` companion struct. Owns the response shape
         // with every field wrapped in an extra `Option`.
         #[derive(::std::fmt::Debug, ::std::default::Default, ::serde::Serialize)]
         #(#serde_attrs)*
@@ -232,7 +232,7 @@ fn process_field(field: &Field) -> syn::Result<Option<(TokenStream2, FieldInfo)>
 
 /// Extracts `name = "..."` and the optional `row = <PartialRow>` from the
 /// struct's `#[partial_response(...)]`. `name` falls back to
-/// `{Struct}PartialResponse`; `row` is `None` unless given.
+/// `Partial{Struct}`; `row` is `None` unless given.
 fn extract_struct_attrs(input: &DeriveInput) -> syn::Result<(String, Option<Path>)> {
     let mut name: Option<String> = None;
     let mut row: Option<Path> = None;

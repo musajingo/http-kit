@@ -1,4 +1,4 @@
-//! Compile-fail tests for `#[derive(ProjectionField)]` diagnostics.
+//! Compile-fail tests for macro diagnostics.
 
 #[test]
 fn compile_fail() {

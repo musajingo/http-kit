@@ -1,44 +1,29 @@
-Injects offset-pagination fields (`page`, `page_size`) into a struct.
+Adds `page: u32` and `page_size: u32` query fields.
 
-## Generated fields
+Serde defaults are page 1 and page size 20. Generated Valid8r rules require
+page ≥ 1 and page size between 1 and 100. Validation must be called explicitly
+or through a validated extractor.
 
-| Field | Type | Default | Range |
-|---|---|---|---|
-| `page` | `u32` | `1` (or `default_page`) | `≥ 1` |
-| `page_size` | `u32` | `20` (or `default_page_size`) | `1 – 100` (or `max_page_size`) |
+| Argument | Effect |
+| --- | --- |
+| `default_page_size = N` | Change the omitted page size |
+| `max_page_size = N` | Change its validation maximum |
+| `skip(serde)` | Omit defaults and their helpers |
+| `skip(validate)` | Omit range rules |
+| `skip(utoipa)` | Omit Utoipa parameter attributes |
 
-## Arguments
+Defaults and maxima must be positive, with default ≤ maximum. Invalid settings
+fail compilation even with `skip(validate)`. Put this attribute before derives.
+This example needs direct Serde, Valid8r, and Serde JSON dependencies:
 
-| Argument | Type | Default | Description |
-|---|---|---|---|
-| `default_page_size = N` | `u32` | `20` | Default page size |
-| `max_page_size = N` | `u32` | `100` | Maximum allowed page size |
-| `skip(serde)` | — | off | Omit `#[serde(...)]` attrs and helper fns |
-| `skip(validate)` | — | off | Omit `#[validate(range(...))]` on both fields |
-| `skip(utoipa)` | — | off | Omit `#[param(...)]` on both fields |
+```rust,ignore
+#[http_kit_macros::offset_pagination(default_page_size = 25, max_page_size = 200, skip(utoipa))]
+#[derive(serde::Deserialize, valid8r::Validate)]
+struct ListQuery {}
 
-## Syntax
-
-```text
-#[offset_pagination]
-#[offset_pagination(default_page_size = 25)]
-#[offset_pagination(max_page_size = 50)]
-#[offset_pagination(default_page_size = 25, max_page_size = 50)]
-#[offset_pagination(skip(utoipa), default_page_size = 10)]
-#[offset_pagination(skip(serde, validate, utoipa))]
+let query: ListQuery = serde_json::from_str("{}").unwrap();
+valid8r::Validate::validate(&query).unwrap();
+assert_eq!((query.page, query.page_size), (1, 25));
 ```
 
-## Example
-
-```ignore
-#[http_kit_macros::offset_pagination(default_page_size = 25, max_page_size = 200)]
-#[derive(Debug, serde::Deserialize, valid8r::Validate, utoipa::IntoParams)]
-pub struct ListUsersQuery {
-    pub search: Option<String>,
-}
-
-// Injected: page (default 1), page_size (default 25, max 200)
-let q: ListUsersQuery = serde_json::from_str("{}").unwrap();
-assert_eq!(q.page, 1);
-assert_eq!(q.page_size, 25);
-```
+Without `skip(utoipa)`, add Utoipa and derive `utoipa::IntoParams`.
