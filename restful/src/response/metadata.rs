@@ -1,4 +1,4 @@
-use crate::pagination::{cursor::CursorPaginationMetadata, offset::OffsetPaginationMetadata};
+use crate::pagination::PaginationMetadata;
 
 /// General-purpose metadata container for API responses.
 #[derive(Default, Debug, Clone, serde::Serialize, bon::Builder)]
@@ -10,36 +10,10 @@ pub struct ResponseMetadata {
     pagination: Option<PaginationMetadata>,
 }
 
-/// Pagination metadata that can be either offset-based or cursor-based.
-///
-/// Uses `#[serde(untagged)]` so the JSON output contains the variant's fields
-/// directly, without a discriminator tag.
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(untagged)]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub enum PaginationMetadata {
-    /// Traditional offset-based pagination.
-    Offset(OffsetPaginationMetadata),
-
-    /// Cursor-based keyset pagination.
-    Cursor(CursorPaginationMetadata),
-}
-
-impl From<OffsetPaginationMetadata> for PaginationMetadata {
-    fn from(offset: OffsetPaginationMetadata) -> Self {
-        PaginationMetadata::Offset(offset)
-    }
-}
-
-impl From<CursorPaginationMetadata> for PaginationMetadata {
-    fn from(cursor: CursorPaginationMetadata) -> Self {
-        PaginationMetadata::Cursor(cursor)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::pagination::{cursor::CursorPaginationMetadata, offset::OffsetPaginationMetadata};
 
     #[test]
     fn test_response_metadata_default_is_empty() {
