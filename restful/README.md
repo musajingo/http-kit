@@ -30,7 +30,7 @@ use restful::pagination::offset::OffsetPaginationMetadata;
 use restful::response::{ApiResponse, HttpErrorResponse, ResponseMetadata};
 
 let pagination = OffsetPaginationMetadata::new(40, 1, 20);
-let meta = ResponseMetadata::builder().pagination(pagination).build();
+let meta = ResponseMetadata::new(pagination);
 let response = ApiResponse::ok(vec!["example"], Some(meta)).unwrap();
 assert_eq!(response.code().as_u16(), 200);
 assert_eq!(serde_json::to_value(response).unwrap()["meta"]["pagination"]["nextPage"], 2);

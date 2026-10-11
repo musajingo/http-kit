@@ -22,7 +22,7 @@ default       = ["response"]
 full          = ["response", "axum", "projection", "macros", "field-delta", "pgkit", "utoipa"]
 field-delta   = ["dep:field-delta"]
 projection    = ["dep:thiserror", "dep:valid8r"]
-response      = ["dep:axum", "dep:serde_json", "dep:bon", "dep:strum"]
+response      = ["dep:axum", "dep:serde_json", "dep:strum"]
 axum          = ["response", "dep:thiserror", "dep:valid8r", "dep:tracing", "dep:serde_path_to_error"]
 macros        = ["dep:restful-macros"]
 utoipa        = ["dep:utoipa", "field-delta?/utoipa"]
@@ -31,7 +31,6 @@ pgkit         = ["dep:pgkit"]
 [dependencies]
 serde               = { workspace = true }
 axum                = { version = "0.8", optional = true }
-bon                 = { version = "3.8", optional = true }
 serde_json          = { workspace = true, optional = true }
 strum               = { workspace = true, optional = true }
 thiserror           = { version = "2.0", optional = true }

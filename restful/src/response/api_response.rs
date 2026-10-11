@@ -158,9 +158,7 @@ mod tests {
         struct MyData {
             field: String,
         }
-        let meta = ResponseMetadata::builder()
-            .pagination(OffsetPaginationMetadata::new(10, 1, 5))
-            .build();
+        let meta = ResponseMetadata::new(OffsetPaginationMetadata::new(10, 1, 5));
         let response = ApiResponse::ok(
             MyData {
                 field: "test".to_string(),
@@ -279,7 +277,7 @@ mod tests {
             next_cursor: Some("abc123".to_string()),
             limit: 20,
         };
-        let meta = ResponseMetadata::builder().pagination(cursor).build();
+        let meta = ResponseMetadata::new(cursor);
         let api_resp = ApiResponse::ok(vec!["item1", "item2"], Some(meta)).unwrap();
         let body_json = deserialize_response_to_value(api_resp.into_response()).await;
 
