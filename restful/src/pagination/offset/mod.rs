@@ -1,3 +1,5 @@
+//! Page-number pagination metadata and query-field macro.
+
 mod metadata;
 
 pub use metadata::OffsetPaginationMetadata;

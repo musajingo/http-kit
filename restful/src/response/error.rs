@@ -1,6 +1,15 @@
 use super::error_type::HttpErrorResponseType;
 
 /// Structured error details for failed API operations.
+///
+/// ```
+/// use restful::response::HttpErrorResponse;
+///
+/// let err = HttpErrorResponse::not_found("Item not found");
+/// let json = serde_json::to_value(&err).unwrap();
+/// assert_eq!(json["type"], "NotFound");
+/// assert_eq!(json["message"], "Item not found");
+/// ```
 #[derive(Debug, serde::Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HttpErrorResponse {

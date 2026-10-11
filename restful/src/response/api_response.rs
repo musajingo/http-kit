@@ -13,6 +13,16 @@ use super::{HttpErrorResponse, ResponseMetadata};
 ///
 /// Wraps all API responses in a consistent structure. Use the constructor methods
 /// ([`ApiResponse::ok`], [`ApiResponse::created`], etc.) rather than building manually.
+///
+/// ```
+/// use restful::response::{ApiResponse, HttpErrorResponse};
+///
+/// let ok = ApiResponse::ok(vec!["item"], None).unwrap();
+/// assert_eq!(ok.code().as_u16(), 200);
+///
+/// let err = ApiResponse::from(HttpErrorResponse::not_found("Item not found"));
+/// assert_eq!(err.code().as_u16(), 404);
+/// ```
 #[derive(Debug, serde::Serialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ApiResponse {

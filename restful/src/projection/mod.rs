@@ -1,3 +1,9 @@
+//! Field selection from the `?fields=` query parameter.
+//!
+//! [`Projection`] parses and validates the selection; [`ProjectionField`]
+//! lists a type's selectable fields and is usually derived (`macros` feature).
+//! The application builds the selected response from the parsed fields.
+
 #[cfg(feature = "pgkit")]
 mod column_selections;
 mod error;

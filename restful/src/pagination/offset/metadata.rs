@@ -1,4 +1,13 @@
 /// Offset-based pagination metadata for list endpoints.
+///
+/// ```
+/// use restful::pagination::offset::OffsetPaginationMetadata;
+///
+/// let meta = OffsetPaginationMetadata::new(45, 2, 20);
+/// assert_eq!(meta.total_pages, 3);
+/// assert_eq!(meta.next_page, Some(3));
+/// assert_eq!(meta.prev_page, Some(1));
+/// ```
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -18,9 +27,10 @@ pub struct OffsetPaginationMetadata {
 }
 
 impl OffsetPaginationMetadata {
-    /// Creates pagination metadata with auto-calculated navigation. `page` is
-    /// clamped into `1..=total_pages` so an out-of-range page cannot produce
-    /// phantom navigation links.
+    /// Creates pagination metadata with auto-calculated navigation. A zero
+    /// `page_size` becomes one. `page` is clamped into `1..=total_pages` so an
+    /// out-of-range page cannot produce phantom navigation links. With no
+    /// items, `total_pages` is 0, `page` is 1, and there is no navigation.
     pub fn new(total: u32, page: u32, page_size: u32) -> Self {
         let page_size = page_size.max(1);
         let total_pages = (total as u64).div_ceil(page_size as u64) as u32;

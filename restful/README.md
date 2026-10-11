@@ -122,6 +122,35 @@ derives support parsing field names and building partial response types.
 They do not apply a projection to an existing response. See `Projection`'s API
 documentation for selection syntax and `ProjectionField`'s for Pgkit column mapping.
 
+End to end, the application checks the parsed fields and fills the partial:
+
+```rust,ignore
+use restful::projection::{PartialResponse, Projection, ProjectionField};
+
+#[derive(serde::Serialize, ProjectionField, PartialResponse)]
+#[projection_field(skip(utoipa))]
+struct Item {
+    id: u32,
+    note: Option<String>,
+}
+
+// From ?fields=id,note
+let fields = Projection::<ItemField>::from("id,note".to_owned());
+assert!(fields.is_valid());
+
+let mut partial = PartialItem::default();
+if fields.fields().contains(&ItemField::Id) {
+    partial.id = Some(7);
+}
+if fields.fields().contains(&ItemField::Note) {
+    partial.note = Some(None); // selected, but null
+}
+assert_eq!(
+    serde_json::to_value(partial).unwrap(),
+    serde_json::json!({ "id": 7, "note": null })
+);
+```
+
 With `field-delta`, `restful::Delta<T>` represents unchanged, clear, and set
 PATCH values. Use `#[serde(default)]` on a Delta field to treat omitted input
 as unchanged.

@@ -1,4 +1,14 @@
 /// Cursor pagination metadata included in list responses.
+///
+/// ```
+/// use restful::pagination::cursor::CursorPaginationMetadata;
+///
+/// let meta = CursorPaginationMetadata::new(20, Some("abc".to_owned()));
+/// assert!(meta.has_more);
+///
+/// let last_page = CursorPaginationMetadata::new(20, None);
+/// assert!(!last_page.has_more);
+/// ```
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

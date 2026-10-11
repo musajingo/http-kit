@@ -1,3 +1,9 @@
+//! API response envelope.
+//!
+//! [`ApiResponse`] wraps success data or an [`HttpErrorResponse`] with a
+//! matching status code, and converts into an Axum response.
+//! [`ResponseMetadata`] carries pagination and custom metadata fields.
+
 mod api_response;
 mod error;
 mod error_type;

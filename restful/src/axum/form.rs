@@ -4,7 +4,11 @@ use valid8r::Validate;
 
 use super::rejection::ExtractorRejection;
 
-/// Deserializes and validates a form body before the handler runs.
+/// Deserializes and validates form data before the handler runs.
+///
+/// Like Axum's `Form`: GET requests read the URL query string; other methods
+/// read an `application/x-www-form-urlencoded` body. Multipart forms are not
+/// supported.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ValidatedForm<T>(pub T);
 
