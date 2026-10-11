@@ -30,7 +30,7 @@ use restful::pagination::offset::OffsetPaginationMetadata;
 use restful::response::{ApiResponse, HttpErrorResponse, ResponseMetadata};
 
 let pagination = OffsetPaginationMetadata::new(40, 1, 20);
-let meta = ResponseMetadata::new(pagination);
+let meta = ResponseMetadata::paginated(pagination);
 let response = ApiResponse::ok(vec!["example"], Some(meta)).unwrap();
 assert_eq!(response.code().as_u16(), 200);
 assert_eq!(serde_json::to_value(response).unwrap()["meta"]["pagination"]["nextPage"], 2);
@@ -45,6 +45,29 @@ Success envelopes contain `data` and optional `meta`; failures contain
 
 Offset metadata clamps page size to at least one and the page to the available
 range. Cursor metadata sets `has_more` from whether `next_cursor` is present.
+
+Add custom metadata with `.set(key, serde_json::Value)`. Custom fields appear
+directly inside `meta`, alongside pagination. Start with `ResponseMetadata::default()`
+for a response without pagination:
+
+```rust
+use restful::response::{ApiResponse, ResponseMetadata};
+use serde_json::json;
+
+let mut meta = ResponseMetadata::default();
+meta.set("requestId", json!("req_123")).unwrap();
+meta.set("currency", json!({"display": "AED", "rate": "3.67"})).unwrap();
+let response = ApiResponse::ok(vec!["example"], Some(meta)).unwrap();
+let json = serde_json::to_value(response).unwrap();
+assert_eq!(json["meta"]["requestId"], "req_123");
+assert_eq!(json["meta"]["currency"]["display"], "AED");
+assert!(json["meta"].get("pagination").is_none());
+```
+
+Repeated custom keys replace their previous values. The `"pagination"` key is
+reserved; `.set()` returns `ReservedKeyError` for it. Convert typed metadata with
+`serde_json::to_value(value)?` before adding it. With `utoipa`, custom fields are
+represented by an open object schema rather than individual typed properties.
 
 ## Validated requests
 

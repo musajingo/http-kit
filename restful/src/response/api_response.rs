@@ -158,7 +158,7 @@ mod tests {
         struct MyData {
             field: String,
         }
-        let meta = ResponseMetadata::new(OffsetPaginationMetadata::new(10, 1, 5));
+        let meta = ResponseMetadata::paginated(OffsetPaginationMetadata::new(10, 1, 5));
         let response = ApiResponse::ok(
             MyData {
                 field: "test".to_string(),
@@ -277,12 +277,21 @@ mod tests {
             next_cursor: Some("abc123".to_string()),
             limit: 20,
         };
-        let meta = ResponseMetadata::new(cursor);
+        let mut meta = ResponseMetadata::paginated(cursor);
+        meta.set("requestId", json!("req_123")).unwrap();
+        meta.set("currency", json!({"display": "AED", "rate": "3.67"}))
+            .unwrap();
         let api_resp = ApiResponse::ok(vec!["item1", "item2"], Some(meta)).unwrap();
         let body_json = deserialize_response_to_value(api_resp.into_response()).await;
 
         assert_eq!(body_json["meta"]["pagination"]["hasMore"], true);
         assert_eq!(body_json["meta"]["pagination"]["nextCursor"], "abc123");
         assert_eq!(body_json["meta"]["pagination"]["limit"], 20);
+        assert_eq!(body_json["meta"]["requestId"], "req_123");
+        assert_eq!(
+            body_json["meta"]["currency"],
+            json!({"display": "AED", "rate": "3.67"})
+        );
+        assert!(body_json["meta"].get("extra").is_none());
     }
 }
