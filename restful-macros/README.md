@@ -25,8 +25,8 @@ supplies the generated ordering type:
 
 ```toml
 [dependencies]
-restful-macros = "0.1.0"
-restful = { version = "0.1.0", default-features = false }
+restful-macros = "0.2.0"
+restful = { version = "0.2.0", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 valid8r = "0.2.2"

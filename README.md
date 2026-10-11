@@ -16,7 +16,7 @@ the selected response fields.
 
 ```toml
 [dependencies]
-restful = { version = "0.1.0", features = ["axum"] }
+restful = { version = "0.2.0", features = ["axum"] }
 serde = { version = "1", features = ["derive"] }
 valid8r = "0.2.2"
 ```
