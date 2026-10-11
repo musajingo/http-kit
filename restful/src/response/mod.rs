@@ -7,5 +7,5 @@ mod status;
 pub use api_response::ApiResponse;
 pub use error::HttpErrorResponse;
 pub use error_type::HttpErrorResponseType;
-pub use metadata::{CurrencyMetadata, PaginationMetadata, ResponseMetadata};
+pub use metadata::{PaginationMetadata, ResponseMetadata};
 pub use status::ApiResponseStatus;

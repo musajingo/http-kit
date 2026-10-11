@@ -1,5 +1,3 @@
-use chrono::{DateTime, Utc};
-
 use crate::pagination::{cursor::CursorPaginationMetadata, offset::OffsetPaginationMetadata};
 
 /// General-purpose metadata container for API responses.
@@ -10,30 +8,6 @@ pub struct ResponseMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(into)]
     pagination: Option<PaginationMetadata>,
-
-    /// Display-currency metadata, present only when the response's money fields
-    /// were converted into a client-requested display currency.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    currency: Option<CurrencyMetadata>,
-}
-
-/// Display-currency metadata: the currency the response's money fields were
-/// restated in, the base ledger currency, the USD→display rate applied, and when
-/// that rate was last refreshed (`null` for the USD identity or a seeded rate
-/// never fetched from the provider).
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct CurrencyMetadata {
-    /// ISO 4217 code the money fields are expressed in (e.g. `"CNY"`).
-    pub display: String,
-    /// The base/ledger currency the amounts are stored in — always `"USD"`.
-    pub base: String,
-    /// The applied USD→display rate, as a decimal string (e.g. `"7.2"`).
-    pub rate: String,
-    /// When the applied rate was last fetched from the provider; `null` for the
-    /// USD identity or a seeded rate never fetched.
-    pub as_of: Option<DateTime<Utc>>,
 }
 
 /// Pagination metadata that can be either offset-based or cursor-based.
@@ -116,50 +90,5 @@ mod tests {
         let meta = ResponseMetadata::builder().build();
         let json = serde_json::to_value(&meta).unwrap();
         assert!(json.get("pagination").is_none());
-    }
-
-    fn currency() -> CurrencyMetadata {
-        CurrencyMetadata {
-            display: "CNY".to_string(),
-            base: "USD".to_string(),
-            rate: "7.2".to_string(),
-            as_of: None,
-        }
-    }
-
-    #[test]
-    fn test_response_metadata_currency_serializes_block() {
-        let meta = ResponseMetadata::builder().currency(currency()).build();
-        let json = serde_json::to_value(&meta).unwrap();
-        assert_eq!(json["currency"]["display"], "CNY");
-        assert_eq!(json["currency"]["base"], "USD");
-        assert_eq!(json["currency"]["rate"], "7.2");
-        assert!(json["currency"]["asOf"].is_null());
-        assert!(json.get("pagination").is_none());
-    }
-
-    #[test]
-    fn test_response_metadata_currency_coexists_with_pagination() {
-        let cursor = CursorPaginationMetadata {
-            has_more: true,
-            next_cursor: Some("xyz".to_string()),
-            limit: 10,
-        };
-        let meta = ResponseMetadata::builder()
-            .pagination(cursor)
-            .currency(currency())
-            .build();
-        let json = serde_json::to_value(&meta).unwrap();
-        assert_eq!(json["pagination"]["hasMore"], true);
-        assert_eq!(json["currency"]["display"], "CNY");
-    }
-
-    #[test]
-    fn test_response_metadata_maybe_currency_absent_skips_block() {
-        let meta = ResponseMetadata::builder()
-            .maybe_currency(None::<CurrencyMetadata>)
-            .build();
-        let json = serde_json::to_value(&meta).unwrap();
-        assert!(json.get("currency").is_none());
     }
 }

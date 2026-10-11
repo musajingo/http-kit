@@ -45,7 +45,6 @@ Success envelopes contain `data` and optional `meta`; failures contain
 
 Offset metadata clamps page size to at least one and the page to the available
 range. Cursor metadata sets `has_more` from whether `next_cursor` is present.
-Currency metadata carries caller-supplied currency and rate information.
 
 ## Validated requests
 
