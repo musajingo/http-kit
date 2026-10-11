@@ -749,51 +749,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "http-kit"
-version = "0.1.0"
-dependencies = [
- "axum",
- "bon",
- "chrono",
- "field-delta",
- "http-kit-macros",
- "pgkit",
- "serde",
- "serde_json",
- "serde_path_to_error",
- "strum 0.28.0",
- "thiserror",
- "tokio",
- "tracing",
- "utoipa",
- "valid8r",
-]
-
-[[package]]
-name = "http-kit-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "http-kit-macros-tests"
-version = "0.1.0"
-dependencies = [
- "http-kit",
- "http-kit-macros",
- "pgkit",
- "serde",
- "serde_json",
- "strum 0.28.0",
- "trybuild",
- "utoipa",
- "valid8r",
-]
-
-[[package]]
 name = "httparse"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1455,6 +1410,51 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "restful"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "bon",
+ "chrono",
+ "field-delta",
+ "pgkit",
+ "restful-macros",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "strum 0.28.0",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "valid8r",
+]
+
+[[package]]
+name = "restful-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "restful-macros-tests"
+version = "0.1.0"
+dependencies = [
+ "pgkit",
+ "restful",
+ "restful-macros",
+ "serde",
+ "serde_json",
+ "strum 0.28.0",
+ "trybuild",
+ "utoipa",
+ "valid8r",
+]
 
 [[package]]
 name = "rust_decimal"

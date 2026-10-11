@@ -22,16 +22,16 @@ esac
 
 run cargo +stable clippy --workspace --all-features --all-targets --locked -- -D warnings
 run cargo +stable test --workspace --all-features --locked
-run cargo +stable test -p http-kit --locked
-run cargo +stable test -p http-kit-macros-tests --locked
-run cargo +stable test -p http-kit-macros-tests --doc --locked -- --ignored
+run cargo +stable test -p restful --locked
+run cargo +stable test -p restful-macros-tests --locked
+run cargo +stable test -p restful-macros-tests --doc --locked -- --ignored
 run env RUSTDOCFLAGS="-D warnings" cargo +stable doc --workspace --all-features --no-deps --locked
 
 # Compile each feature in isolation, plus no features. List read from Cargo.toml.
 features=$(cargo +stable metadata --format-version 1 --no-deps |
-  jq -r '.packages[] | select(.name == "http-kit").features | keys[] | select(. != "default")')
+  jq -r '.packages[] | select(.name == "restful").features | keys[] | select(. != "default")')
 for feature in "" $features; do
-  run cargo +stable check -p http-kit --no-default-features ${feature:+--features "$feature"} --locked
+  run cargo +stable check -p restful --no-default-features ${feature:+--features "$feature"} --locked
 done
 
 echo "All checks passed."
